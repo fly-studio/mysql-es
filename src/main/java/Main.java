@@ -1,4 +1,5 @@
 import com.beust.jcommander.JCommander;
+import com.fly.sync.setting.Config;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
 
@@ -13,10 +14,10 @@ public class Main {
                 .build()
                 .parse(argv);
 
-        Setting.CONFIG_PATH = args.configPath.length() == 0 ? Setting.getEtc("river.json").getAbsolutePath() : args.configPath;
+        Setting.ETC_PATH = args.etcPath.length() == 0 ? Setting.getEtc().getAbsolutePath() : args.etcPath;
 
         try {
-            River river = Setting.readRiver();
+
 
         } catch (Exception e)
         {

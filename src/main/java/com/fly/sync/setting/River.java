@@ -1,16 +1,19 @@
 package com.fly.sync.setting;
 
+import com.fly.core.contract.AbstractJsonable;
 import com.squareup.moshi.Json;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class River {
+public class River extends AbstractJsonable {
 
     public Host my;
     public Host es;
+    public String charset = "utf8";
+    @Json(name = "server_id") public int serverId = 9999;
+
     public List<Database> databases;
 
     enum SyncType {
@@ -37,7 +40,7 @@ public class River {
         public String type = "_doc";
         public String[] id = new String[] {"id"};
         public String[] columns = new String[] {"*"};
-        public Map<String, String> columnAlias = new HashMap<String, String>();
+        @Json(name = "column_alias") public Map<String, String> columnAlias = new HashMap<String, String>();
         public Map<String, Relation> relations = new HashMap<String, Relation>();
         public Map<String, SyncType> with = new HashMap<String, SyncType>();
     }
@@ -47,8 +50,7 @@ public class River {
         public String foreign;
         public String local;
         public String[] columns = new String[] {"*"};
-        public Map<String, String> columnAlias = new HashMap<String, String>();
-
+        @Json(name = "column_alias") public Map<String, String> columnAlias = new HashMap<String, String>();
 
     }
 }

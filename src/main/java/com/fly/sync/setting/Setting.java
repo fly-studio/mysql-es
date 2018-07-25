@@ -1,21 +1,29 @@
 package com.fly.sync.setting;
 
-import com.fly.utils.text.StripJsonComment;
-import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.Moshi;
+import com.fly.core.contract.AbstractJsonable;
+import com.fly.core.text.StripJsonComment;
 import com.sun.istack.internal.NotNull;
+import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
 
 public class Setting {
 
-    public static String CONFIG_PATH = null;
+    public static String ETC_PATH = null;
+
+    public final static String RIVER_FILE = "river.json";
+    public final static String CONFIG_FILE = "config.json";
+    public final static String BINLOG_FILE = "binlog.json";
+
+
+    public static Config config;
+    public static River river;
+    public static BinLog binLog;
 
     public static File getEtc()
     {
@@ -27,32 +35,56 @@ public class Setting {
         return new File(getEtc(), filename);
     }
 
-    public static String readJson(String path) throws IOException
+    public static String readJson(File file) throws IOException
     {
-        File file = new File(path);
         BufferedSource source = Okio.buffer(Okio.source(file));
         String str = source.readUtf8();
         source.close();
-
         return StripJsonComment.strip(str);
     }
 
-    public static <T> T readJson(String path, Type clazz) throws IOException
+    public static Config getConfig()
     {
-        Moshi moshi = new Moshi.Builder().build();
-        JsonAdapter<T> jsonAdapter = moshi.adapter(clazz);
-
-        return jsonAdapter.fromJson(readJson(path));
+        return getConfig(new File(Setting.ETC_PATH, CONFIG_FILE));
     }
 
-    public static River readRiver() throws IOException
+    public static Config getConfig(File file)
     {
-        return readRiver(Setting.CONFIG_PATH);
+        if (Setting.config != null)
+            return Setting.config;
+
+        Config config;
+        try {
+            config = AbstractJsonable.fromJson(Config.class, readJson(file));
+
+            if (config.data.length() == 0)
+                config.data = getEtc("data").getAbsolutePath();
+
+            if (config.bulkSize < 128) config.bulkSize = 128;
+            if (config.flushBulkTime < 200) config.flushBulkTime = 200;
+
+        } catch (Exception e) {
+            config = new Config();
+        }
+
+        File f = new File(config.data);
+        f.mkdirs();
+
+        Setting.config = config;
+        return config;
     }
 
-    public static River readRiver(String path) throws IOException
+    public static River getRiver() throws IOException
     {
-        River river = Setting.readJson(path, River.class);
+        return getRiver(new File(Setting.ETC_PATH, RIVER_FILE));
+    }
+
+    public static River getRiver(File file) throws IOException
+    {
+        if (Setting.river != null)
+            return Setting.river;
+
+        River river = AbstractJsonable.fromJson(River.class, readJson(file));
         for(River.Database db : river.databases)
         {
             for(Map.Entry<String, River.Table> entry: db.tables.entrySet())
@@ -64,7 +96,48 @@ public class Setting {
 
             }
         }
+        Setting.river = river;
         return river;
+    }
+
+    public static BinLog getBinLog()
+    {
+        Config config = getConfig();
+        return getBinLog(new File(config.data, BINLOG_FILE));
+    }
+
+    public static BinLog getBinLog(File file)
+    {
+        if (Setting.binLog != null)
+            return Setting.binLog;
+
+        BinLog log;
+        try {
+             log = AbstractJsonable.fromJson(BinLog.class, readJson(file));
+        } catch (Exception e) {
+            log = new BinLog();
+        }
+
+        Setting.binLog = log;
+        return log;
+    }
+
+    public static void updateBinLog(String name, long pos) throws IOException
+    {
+        Config config = getConfig();
+        updateBinLog(new File(config.data, BINLOG_FILE), name, pos);
+    }
+
+    public static void updateBinLog(File file, String name, long pos) throws IOException
+    {
+        if (!file.exists())
+            file.createNewFile();
+
+        binLog.name = name;
+        binLog.position = pos;
+
+        BufferedSink sink = Okio.buffer(Okio.sink(file));
+        binLog.toJson(sink);
     }
 
     private static String replaceDBValue(String str, String db, String table)

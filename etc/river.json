@@ -20,6 +20,10 @@
     "user": "",
     "password" : ""
   },
+  // Execute "Set NAMES utf8" once before SELECT
+  "charset": "utf8",
+  // pseudo server id like a slave
+  "server_id": 100000,
   "databases" : [
     {
       "db" : "db1",
@@ -46,7 +50,7 @@
           // What columns you wanna sync to this index, default: ["*"]
           "columns": ["*"],
           // Column alias
-          "columnAlias": {
+          "column_alias": {
             // "Column Name" : "New name"
           },
           // One-to-One relationship
@@ -84,7 +88,7 @@
               "foreign": "id", // Which column in "users"
               "local": "uid", // Which column in "comments"
               "columns": ["*"], // Same as Table's columns
-              "columnAlias": { // Same as Tables's columnAlias
+              "column_alias": { // Same as Tables's columnAlias
 
               }
             }

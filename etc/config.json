@@ -1,0 +1,13 @@
+{
+  // log, master.info's path
+  "data": "./",
+  // mysqldump absolute path
+  "mysqldump": "mysqldump",
+  // minimal items to be inserted in one bulk
+  // min is 128
+  "bulk_size": 128,
+  // force flush the pending requests if we don't have enough items >= bulk_size
+  // unit: ms, min is 200ms
+  "flush_bulk_time": 200
+  //
+}
