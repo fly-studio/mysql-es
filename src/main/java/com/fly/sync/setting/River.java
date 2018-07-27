@@ -1,13 +1,13 @@
 package com.fly.sync.setting;
 
-import com.fly.core.contract.AbstractJsonable;
+import com.fly.core.text.json.Jsonable;
 import com.squareup.moshi.Json;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class River extends AbstractJsonable {
+public class River extends Jsonable {
 
     public Host my;
     public Host es;

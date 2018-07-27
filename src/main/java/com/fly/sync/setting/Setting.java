@@ -1,82 +1,130 @@
 package com.fly.sync.setting;
 
-import com.fly.core.contract.AbstractJsonable;
-import com.fly.core.text.StripJsonComment;
+import com.fly.core.io.Io;
+import com.fly.core.text.json.Jsonable;
+import com.fly.sync.exception.ConfigException;
 import com.sun.istack.internal.NotNull;
 import okio.BufferedSink;
-import okio.BufferedSource;
 import okio.Okio;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
 public class Setting {
 
     public static String ETC_PATH = null;
 
+    static {
+        String etcPath = System.getProperty("es.etc.path");
+        if (etcPath != null && etcPath.length() != 0)
+            ETC_PATH = etcPath;
+        else
+            ETC_PATH = new File(System.getProperty("user.dir"), "etc").getAbsolutePath();
+
+    }
+
     public final static String RIVER_FILE = "river.json";
     public final static String CONFIG_FILE = "config.json";
     public final static String BINLOG_FILE = "binlog.json";
 
-
+    public final static Logger logger = LoggerFactory.getLogger(Setting.class);
     public static Config config;
     public static River river;
     public static BinLog binLog;
 
-    public static File getEtc()
+    public static File getEtcPath()
     {
-        return new File (System.getProperty("user.dir"), "etc");
+        return new File(ETC_PATH);
     }
 
-    public static File getEtc(@NotNull String filename)
+    public static File getEtcPath(@NotNull String filename)
     {
-        return new File(getEtc(), filename);
+        return new File(getEtcPath(), filename);
     }
 
-    public static String readJson(File file) throws IOException
+    public static File getEtcPath(@NotNull File file)
     {
-        BufferedSource source = Okio.buffer(Okio.source(file));
-        String str = source.readUtf8();
-        source.close();
-        return StripJsonComment.strip(str);
+        return file.isAbsolute() ? file : getEtcPath(file.getPath());
     }
 
-    public static Config getConfig()
+    public static Config getConfig() throws Exception
     {
-        return getConfig(new File(Setting.ETC_PATH, CONFIG_FILE));
+        return getConfig(getEtcPath(CONFIG_FILE));
     }
 
-    public static Config getConfig(File file)
+    public static Config getConfig(File file) throws Exception
     {
         if (Setting.config != null)
             return Setting.config;
 
         Config config;
+
         try {
-            config = AbstractJsonable.fromJson(Config.class, readJson(file));
-
-            if (config.data.length() == 0)
-                config.data = getEtc("data").getAbsolutePath();
-
-            if (config.bulkSize < 128) config.bulkSize = 128;
-            if (config.flushBulkTime < 200) config.flushBulkTime = 200;
-
+            config = Jsonable.fromJson(Config.class, Io.readJson(file));
         } catch (Exception e) {
-            config = new Config();
+            throw new ConfigException(e.getMessage(), e);
         }
 
-        File f = new File(config.data);
-        f.mkdirs();
+        if (config.logDir == null) {
+            config.logDir = getEtcPath("log");
+            logger.warn("Invaid [log_dir] in \""+ CONFIG_FILE +"\", path to default.");
+        }
+
+        config.logDir = getEtcPath(config.logDir);
+        System.setProperty("es.log.path", config.logDir.getAbsolutePath());
+
+        // locate to user's log4j2.xml
+        LoggerContext context = (org.apache.logging.log4j.core.LoggerContext) LogManager.getContext(false);
+        context.setConfigLocation(getEtcPath("log4j2.xml").toURI());
+
+        if (config.dataDir == null)
+        {
+            config.dataDir = getEtcPath("data");
+            logger.warn("Invaid [data_dir] in \"{}\", path to default.", CONFIG_FILE);
+        }
+
+        config.dataDir = getEtcPath(config.dataDir);
+        System.setProperty("es.data.path", config.dataDir.getAbsolutePath());
+
+
+        if (config.bulkSize < 10)
+        {
+            config.bulkSize = 10;
+            logger.warn("[bulk_size] in \"{}\" less than 10, auto change to 10.", CONFIG_FILE);
+        }
+
+        if (config.flushBulkTime < 200)
+        {
+            config.flushBulkTime = 200;
+            logger.warn("[flush_bulk_time] in \"{}\" is less than 200, auto change to 200.", CONFIG_FILE);
+        }
+
+        logger.info("The [data] directory locate to {}", config.dataDir.getAbsolutePath());
+        logger.info("The [log] directory locate to {}", config.logDir.getAbsolutePath());
+
+        try {
+            config.dataDir.mkdirs();
+            config.logDir.mkdirs();
+        } catch (Exception e)
+        {
+            throw new ConfigException(e.getMessage(), e);
+        }
 
         Setting.config = config;
+
+        logger.error("Loaded config.json.");
         return config;
     }
 
     public static River getRiver() throws IOException
     {
-        return getRiver(new File(Setting.ETC_PATH, RIVER_FILE));
+        return getRiver(getEtcPath(RIVER_FILE));
     }
 
     public static River getRiver(File file) throws IOException
@@ -84,7 +132,7 @@ public class Setting {
         if (Setting.river != null)
             return Setting.river;
 
-        River river = AbstractJsonable.fromJson(River.class, readJson(file));
+        River river = Jsonable.fromJson(River.class, Io.readJson(file));
         for(River.Database db : river.databases)
         {
             for(Map.Entry<String, River.Table> entry: db.tables.entrySet())
@@ -102,8 +150,7 @@ public class Setting {
 
     public static BinLog getBinLog()
     {
-        Config config = getConfig();
-        return getBinLog(new File(config.data, BINLOG_FILE));
+        return getBinLog(new File(config.dataDir, BINLOG_FILE));
     }
 
     public static BinLog getBinLog(File file)
@@ -113,7 +160,7 @@ public class Setting {
 
         BinLog log;
         try {
-             log = AbstractJsonable.fromJson(BinLog.class, readJson(file));
+             log = Jsonable.fromJson(BinLog.class, Io.readJson(file));
         } catch (Exception e) {
             log = new BinLog();
         }
@@ -124,8 +171,7 @@ public class Setting {
 
     public static void updateBinLog(String name, long pos) throws IOException
     {
-        Config config = getConfig();
-        updateBinLog(new File(config.data, BINLOG_FILE), name, pos);
+        updateBinLog(new File(config.dataDir, BINLOG_FILE), name, pos);
     }
 
     public static void updateBinLog(File file, String name, long pos) throws IOException
@@ -143,5 +189,12 @@ public class Setting {
     private static String replaceDBValue(String str, String db, String table)
     {
         return str.replace("${DB}", db).replace("${TABLE}", table);
+    }
+
+    public static void readSettings() throws Exception
+    {
+        getConfig();
+        getRiver();
+        getBinLog();
     }
 }

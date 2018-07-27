@@ -1,6 +1,8 @@
 {
-  // log, master.info's path
-  "data": "./",
+  // master.info's path
+  "data_dir": "./data",
+  // log's path
+  "log_dir": "./logs",
   // mysqldump absolute path
   "mysqldump": "mysqldump",
   // minimal items to be inserted in one bulk

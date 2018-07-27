@@ -1,4 +1,4 @@
-package com.fly.core.text;
+package com.fly.core.text.json;
 
 public class StripJsonComment {
 

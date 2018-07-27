@@ -5,9 +5,10 @@
     /**
      * Create A user like this:
      * CREATE USER canal IDENTIFIED BY 'Your Password';
-     * GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
+     * GRANT SELECT, SHOW VIEW, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
+     * FLUSH PRIVILEGES;
      */
-    "user": "canel",
+    "user": "canal",
     "password" : ""
   },
   "es" : {
