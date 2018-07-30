@@ -6,7 +6,6 @@ import com.fly.sync.exception.ConfigException;
 import com.sun.istack.internal.NotNull;
 import okio.BufferedSink;
 import okio.Okio;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.slf4j.Logger;
@@ -73,7 +72,7 @@ public class Setting {
 
         if (config.logDir == null) {
             config.logDir = getEtcPath("log");
-            logger.warn("Invaid [log_dir] in \""+ CONFIG_FILE +"\", path to default.");
+            logger.warn("Invaid [log_dir] in \"{}\", Redirect path to default.", CONFIG_FILE);
         }
 
         config.logDir = getEtcPath(config.logDir);
@@ -118,7 +117,7 @@ public class Setting {
 
         Setting.config = config;
 
-        logger.error("Loaded config.json.");
+        logger.info("Loaded {}.", CONFIG_FILE);
         return config;
     }
 
@@ -169,21 +168,19 @@ public class Setting {
         return log;
     }
 
-    public static void updateBinLog(String name, long pos) throws IOException
+    public static void saveBinLog() throws IOException
     {
-        updateBinLog(new File(config.dataDir, BINLOG_FILE), name, pos);
-    }
+        synchronized (BinLog.class)
+        {
+            File file = new File(config.dataDir, BINLOG_FILE);
 
-    public static void updateBinLog(File file, String name, long pos) throws IOException
-    {
-        if (!file.exists())
-            file.createNewFile();
+            if (!file.exists())
+                file.createNewFile();
 
-        binLog.name = name;
-        binLog.position = pos;
+            BufferedSink sink = Okio.buffer(Okio.sink(file));
+            binLog.toJson(sink);
+        }
 
-        BufferedSink sink = Okio.buffer(Okio.sink(file));
-        binLog.toJson(sink);
     }
 
     private static String replaceDBValue(String str, String db, String table)

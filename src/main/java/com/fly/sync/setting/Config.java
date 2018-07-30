@@ -13,5 +13,4 @@ public class Config extends Jsonable {
     @Json(name = "bulk_size") public int bulkSize = 128;
     @Json(name = "flush_bulk_time") public int flushBulkTime = 200;
 
-
 }

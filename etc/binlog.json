@@ -1,4 +1,8 @@
+// It's sample json, The application will write this file to dataDir
 {
-  "name": "",
-  "position": 0
+  "db_name": {
+    "name": "",
+    "position": 0
+  }
+
 }

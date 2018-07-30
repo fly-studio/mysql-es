@@ -16,24 +16,24 @@ public class River extends Jsonable {
 
     public List<Database> databases;
 
-    enum SyncType {
+    public enum SyncType {
         always,
         once
     }
 
-    static class Host {
+    public static class Host {
         public String host = "";
         public int port = 0;
         public String user = "";
         public String password = "";
     }
 
-    static class Database {
+    public static class Database {
         public String db = "";
         public Map<String, Table> tables = new HashMap<String, Table>();
     }
 
-    static class Table {
+    public static class Table {
         public boolean sync = true;
         public String index;
         public String template = "";
@@ -45,7 +45,7 @@ public class River extends Jsonable {
         public Map<String, SyncType> with = new HashMap<String, SyncType>();
     }
 
-    static class Relation {
+    public static class Relation {
         public String table;
         public String foreign;
         public String local;
