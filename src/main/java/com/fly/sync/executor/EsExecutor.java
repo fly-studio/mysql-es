@@ -1,6 +1,6 @@
 package com.fly.sync.executor;
 
-import com.fly.core.io.Io;
+import com.fly.core.io.IoUtils;
 import com.fly.sync.contract.AbstractConnector;
 import com.fly.sync.exception.DisconnectionException;
 import com.fly.sync.setting.River;
@@ -34,7 +34,7 @@ public class EsExecutor {
     public EsExecutor(River river, boolean autoReconnect) {
         this.river = river;
         this.connector = new Connector(river, autoReconnect);
-        this.connect();
+
     }
 
     public boolean connect()
@@ -84,7 +84,7 @@ public class EsExecutor {
         //With Mapping
         if (table.template != null && !table.template.isEmpty())
         {
-           String json = Io.readJson(Setting.getEtcPath(new File(table.template)));
+           String json = IoUtils.readJson(Setting.getEtcPath(new File(table.template)));
            createIndexRequest.source(json, XContentType.JSON);
         }
 
@@ -170,18 +170,10 @@ public class EsExecutor {
             client = null;
         }
 
-        public boolean doHeartbeat()
+        public void doHeartbeat() throws Exception
         {
-            try {
-                return client.ping();
-                //restClient.performRequest("GET", "/");
-                //return true;
-            } catch (Exception e)
-            {
-
-            }
-
-            return false;
+            client.ping();
+            //restClient.performRequest("GET", "/");
         }
     }
 

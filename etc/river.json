@@ -13,7 +13,7 @@
   },
   "es" : {
     "host" : "127.0.0.1",
-    "port": 3306,
+    "port": 9200,
 
     /**
      * If you installed X-pack or SearchGuard, You can set a user for here

@@ -1,10 +1,11 @@
-package com.fly.sync.dumper;
+package com.fly.sync.mysql;
 
 import com.fly.sync.contract.DatabaseListener;
-import com.fly.sync.exception.DumpException;
+import com.fly.sync.exception.FatalDumpException;
 import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.Config;
 import com.fly.sync.setting.River;
+import com.sun.istack.internal.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,18 +17,23 @@ import java.util.regex.Pattern;
 
 public class Dumper {
 
-    protected Config config;
-    protected River river;
+    private Config config;
+    private River river;
+    private River.Database database;
+    private DatabaseListener listener;
+    private BinLog.Position position = new BinLog.Position();
 
     public final static Logger logger = LoggerFactory.getLogger(Dumper.class);
 
-    public Dumper(Config config, River river)
+    public Dumper(@NotNull Config config, @NotNull River river, @NotNull River.Database database, @NotNull DatabaseListener listener)
     {
         this.config = config;
         this.river = river;
+        this.database = database;
+        this.listener = listener;
     }
 
-    public synchronized void run(River.Database database, DatabaseListener listener) throws IOException, InterruptedException
+    public void run()
     {
         StringBuilder cmd = new StringBuilder();
 
@@ -49,28 +55,32 @@ public class Dumper {
             .append(" --default-character-set=")
             .append(river.charset)
             .append(" --master-data --single-transaction --skip-lock-tables --compact --skip-opt --quick --no-create-info --skip-extended-insert --set-gtid-purged=OFF ")
-            .append(database);
+            .append(database.db);
 
         for (String name: database.tables.keySet()
              ) {
             cmd.append(" ");
             cmd.append(name);
-            if (null != listener) listener.onCreateTable(database, name);
+            listener.onCreateTable(database, name);
         }
 
-        System.out.println(cmd);
+        logger.info(cmd.toString().replace(river.my.password, "*"));
 
-
-        Process process = Runtime.getRuntime().exec(cmd.toString());
-        logger.info("Dump database [{}] from mysqldump.", database.db);
-        dataThread(database, listener, process);
-        errorThread(database, listener, process);
-
-        process.waitFor();
+        try {
+            Process process = Runtime.getRuntime().exec(cmd.toString());
+            logger.info("Dump database [{}] from mysqldump.", database.db);
+            errorThread(process);
+            dataThread(process);
+            process.waitFor();
+            process.destroy();
+        } catch (IOException | InterruptedException e)
+        {
+            listener.onError(database, new FatalDumpException(e));
+        }
 
     }
 
-    public void dataThread(final River.Database database, final DatabaseListener listener, final Process process)
+    private void dataThread(final Process process)
     {
         new Thread(new Runnable() {
             @Override
@@ -83,25 +93,34 @@ public class Dumper {
                     {
                         if (sql.startsWith("CHANGE MASTER TO MASTER_LOG_FILE"))
                         {
-                            triggerMaster(listener, database, sql);
+                            triggerMaster(sql);
                         } else if (sql.startsWith("INSERT INTO")){
-                            triggerInsert(listener, database, sql);
+                            triggerInsert(sql);
                         } else {
                             logger.info("Skip SQL {} ", sql);
                         }
-
                     }
-                } catch (Exception e)
+
+                } catch (IOException e)
                 {
                     process.destroy();
-                    if (null != listener) listener.onError(database, e);
+                    position.reset();
+                    listener.onError(database, new FatalDumpException(e));
+                } finally {
+                    try {
+                        bufferedReader.close();
+                    } catch (Exception e) {}
                 }
+                logger.info("Dump database: \"{}\" complete;", database.db);
 
+                // change the binlog after insert
+                if (!position.isEmpty())
+                    listener.onPositionChange(database, position);
             }
-        });
+        }).start();
     }
 
-    public void errorThread(final River.Database database, final DatabaseListener listener, final Process process){
+    private void errorThread(final Process process){
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -114,33 +133,40 @@ public class Dumper {
                         if (s.contains("[Warning]"))
                             continue;
 
-                        throw new DumpException(s);
+                        process.destroy();
+                        position.reset();
+                        listener.onError(database, new FatalDumpException(s));
+                        break;
                     }
-                } catch (Exception e)
+                } catch (IOException e)
                 {
                     process.destroy();
-                    if (null != listener) listener.onError(database, e);
+                    position.reset();
+                    listener.onError(database, new FatalDumpException(e));
+                } finally {
+                    try {
+                        bufferedReader.close();
+                    } catch (Exception e) {}
                 }
             }
-        });
+        }).start();
     }
 
-    private void triggerMaster(DatabaseListener listener, River.Database database, String sql) {
-        Pattern pattern = Pattern.compile("^\\s?+CHANGE\\s?+MASTER\\s?+TO\\s?+MASTER_LOG_FILE\\s?+=\\s?+['\"]([^'\"]*?)['\"],\\s?+MASTER_LOG_POS\\s?+=\\s?+([\\d]*?);", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(sql);
-        if (matcher.find()) {
-            BinLog.Position position = new BinLog.Position();
-            position.name = matcher.group(1);
-            position.position = Long.parseLong(matcher.group(2));
-
-            if (null != listener) listener.onPostionChange(database, position);
+    private void triggerMaster(String sql) {
+        synchronized (Dumper.class)
+        {
+            Pattern pattern = Pattern.compile("^\\s?+CHANGE\\s?+MASTER\\s?+TO\\s?+MASTER_LOG_FILE\\s?+=\\s?+['\"]([^'\"]*?)['\"],\\s?+MASTER_LOG_POS\\s?+=\\s?+([\\d]*?);", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+            Matcher matcher = pattern.matcher(sql);
+            if (matcher.find()) {
+                position.name = matcher.group(1);
+                position.position = Long.parseLong(matcher.group(2));
+            }
         }
     }
 
-    private void triggerInsert(DatabaseListener listener, River.Database database, String sql)
+    private void triggerInsert(String sql)
     {
-
+        listener.onInsert(database, sql);
     }
-
 
 }

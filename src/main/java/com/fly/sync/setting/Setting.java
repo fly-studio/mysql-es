@@ -1,6 +1,6 @@
 package com.fly.sync.setting;
 
-import com.fly.core.io.Io;
+import com.fly.core.io.IoUtils;
 import com.fly.core.text.json.Jsonable;
 import com.fly.sync.exception.ConfigException;
 import com.sun.istack.internal.NotNull;
@@ -65,9 +65,9 @@ public class Setting {
         Config config;
 
         try {
-            config = Jsonable.fromJson(Config.class, Io.readJson(file));
+            config = Jsonable.fromJson(Config.class, IoUtils.readJson(file));
         } catch (Exception e) {
-            throw new ConfigException(e.getMessage(), e);
+            throw new ConfigException("\"" + CONFIG_FILE + "\" JSON format ERROR.", e);
         }
 
         if (config.logDir == null) {
@@ -121,17 +121,25 @@ public class Setting {
         return config;
     }
 
-    public static River getRiver() throws IOException
+    public static River getRiver() throws ConfigException
     {
         return getRiver(getEtcPath(RIVER_FILE));
     }
 
-    public static River getRiver(File file) throws IOException
+    public static River getRiver(File file) throws ConfigException
     {
         if (Setting.river != null)
             return Setting.river;
 
-        River river = Jsonable.fromJson(River.class, Io.readJson(file));
+        River river;
+        try {
+
+            river = Jsonable.fromJson(River.class, IoUtils.readJson(file));
+        } catch (IOException e)
+        {
+            throw new ConfigException("\"" + RIVER_FILE + "\" JSON format ERROR.", e);
+        }
+
         for(River.Database db : river.databases)
         {
             for(Map.Entry<String, River.Table> entry: db.tables.entrySet())
@@ -159,7 +167,7 @@ public class Setting {
 
         BinLog log;
         try {
-             log = Jsonable.fromJson(BinLog.class, Io.readJson(file));
+             log = Jsonable.fromJson(BinLog.class, IoUtils.readJson(file));
         } catch (Exception e) {
             log = new BinLog();
         }
@@ -179,6 +187,7 @@ public class Setting {
 
             BufferedSink sink = Okio.buffer(Okio.sink(file));
             binLog.toJson(sink);
+            sink.close();
         }
 
     }

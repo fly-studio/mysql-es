@@ -22,9 +22,25 @@ public class BinLog extends Jsonable {
         }
     }
 
+    public void remove(String db)
+    {
+        lists.remove(db);
+    }
+
     public static class Position {
         public String name = "";
         public long position = 0;
+
+        public boolean isEmpty()
+        {
+            return name.isEmpty();
+        }
+
+        public void reset()
+        {
+            name = "";
+            position = 0;
+        }
     }
 
 }

@@ -1,18 +1,27 @@
 package com.fly.sync.executor;
 
-import com.fly.sync.contract.DatabaseListener;
-import com.fly.sync.dumper.Dumper;
-import com.fly.sync.exception.DumpException;
+import com.fly.sync.Main;
 import com.fly.sync.exception.EsException;
-import com.fly.sync.setting.BinLog;
+import com.fly.sync.exception.FatalException;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public class Executor {
 
     private EsExecutor esExecutor;
+    //private Map<River.Database, Thread> threads = new HashMap<>();
+    private static boolean running = false;
+    public final static Logger logger = LoggerFactory.getLogger(Main.class);
+    private ExecutorService threadPool;
 
     public Executor()
     {
@@ -30,66 +39,47 @@ public class Executor {
         esExecutor.close();
     }
 
-    public void run() throws Exception
+    public void run()
     {
+        if (running)
+            throw new RejectedExecutionException("Application is running.");
+
+        running = true;
+
+        threadPool = Executors.newFixedThreadPool(Setting.river.databases.size());
+
         for (River.Database database: Setting.river.databases
-             ) {
-            runDumper();
+                     ) {
+            Thread thread = new ExecutorThread(this, database);
+
+            //threads.put(database, thread);
+            threadPool.submit(thread);
         }
+
+        //threadPool.shutdown();
+
     }
 
-    private DatabaseListener listener = new DatabaseListener() {
-        @Override
-        public void onCreateTable(River.Database database, String table) {
+    public void await() throws InterruptedException
+    {
+        while(!threadPool.awaitTermination(100, TimeUnit.MILLISECONDS));
+    }
 
-        }
 
-        @Override
-        public void onInsert(River.Database database, String sql) {
-
-        }
-
-        @Override
-        public void onUpdate(River.Database database, String sql) {
-
-        }
-
-        @Override
-        public void onPostionChange(River.Database database, BinLog.Position position) {
-            Setting.binLog.set(database.db, position);
-            try {
-                Setting.saveBinLog();
-            } catch (Exception e) {
-                this.onError(database, e);
+    public void throwException(Thread thread, Exception e)
+    {
+        synchronized (Executor.class)
+        {
+            logger.error(e.getMessage(), e);
+            if (e instanceof FatalException)
+            {
+                threadPool.shutdownNow();
+                /*for (Map.Entry<River.Database, Thread> entry: threads.entrySet()
+                     ) {
+                    entry.getValue().interrupt();
+                }*/
             }
         }
-
-        @Override
-        public void onError(River.Database database, String error) {
-            throwException(new DumpException(error));
-        }
-
-        @Override
-        public void onError(River.Database database, Exception error) {
-            throwException(new DumpException(error));
-        }
-    };
-
-    private void runDumper() throws Exception
-    {
-        Dumper dumper = new Dumper(Setting.config, Setting.river);
-        for (River.Database database: Setting.river.databases
-             ) {
-
-            if (Setting.binLog.get(database.db) != null)
-                continue;
-
-            dumper.run(database, listener);
-        }
-    }
-
-    private void throwException(Exception e)
-    {
 
     }
 }

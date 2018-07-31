@@ -16,6 +16,16 @@ public class River extends Jsonable {
 
     public List<Database> databases;
 
+    public Database getDatabase(String db)
+    {
+        for (Database database: databases
+             ) {
+            if (database.db.equals(db))
+                return database;
+        }
+        return null;
+    }
+
     public enum SyncType {
         always,
         once
@@ -31,6 +41,11 @@ public class River extends Jsonable {
     public static class Database {
         public String db = "";
         public Map<String, Table> tables = new HashMap<String, Table>();
+
+        public Table getTable(String name)
+        {
+            return tables.get(name);
+        }
     }
 
     public static class Table {
@@ -43,6 +58,16 @@ public class River extends Jsonable {
         @Json(name = "column_alias") public Map<String, String> columnAlias = new HashMap<String, String>();
         public Map<String, Relation> relations = new HashMap<String, Relation>();
         public Map<String, SyncType> with = new HashMap<String, SyncType>();
+
+        public Relation getRelation(String name)
+        {
+            return relations.get(name);
+        }
+
+        public SyncType getWith(String name)
+        {
+            return with.get(name);
+        }
     }
 
     public static class Relation {

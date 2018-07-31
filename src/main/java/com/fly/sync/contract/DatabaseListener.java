@@ -7,7 +7,7 @@ public interface DatabaseListener {
     void onCreateTable(River.Database database, String table);
     void onInsert(River.Database database, String sql);
     void onUpdate(River.Database database, String sql);
-    void onPostionChange(River.Database database, BinLog.Position position);
-    void onError(River.Database database, String error);
+    void onDelete(River.Database database, String sql);
+    void onPositionChange(River.Database database, BinLog.Position position);
     void onError(River.Database database, Exception error);
 }

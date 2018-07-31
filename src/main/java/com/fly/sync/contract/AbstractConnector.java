@@ -9,7 +9,7 @@ public abstract class AbstractConnector {
 
     private static final int INTERVAL = 5000;
 
-    private Timer timer = new Timer(true);
+    private Timer timer;
     private TimerTask task = new TimerTask() {
         @Override
         public void run() {
@@ -17,9 +17,9 @@ public abstract class AbstractConnector {
         }
     };
 
-    private River river;
-    private boolean autoReconnect, connected;
-    private ConnectionListener listener;
+    protected River river;
+    protected boolean autoReconnect, connected;
+    protected ConnectionListener listener;
 
 
     public AbstractConnector(River river, boolean autoReconnect) {
@@ -42,7 +42,13 @@ public abstract class AbstractConnector {
 
     public boolean connect()
     {
-        doConnecting();
+        try {
+            doConnecting();
+        } catch (Exception e)
+        {
+            throwError(e);
+            return false;
+        }
 
         heartbeat(false);
         if (!isConnected())
@@ -50,7 +56,10 @@ public abstract class AbstractConnector {
 
         if (null != listener) listener.onConnected(this);
 
-        timer.cancel();
+        if (null != timer)
+            timer.cancel();
+
+        timer = new Timer(true);
         timer.schedule(task, INTERVAL, INTERVAL);
 
         return true;
@@ -58,33 +67,51 @@ public abstract class AbstractConnector {
 
     public void reconnect()
     {
-        doReconnect();
+        try {
+            doReconnect();
+        } catch (Exception e)
+        {
+            throwError(e);
+        }
     }
 
-    public synchronized void heartbeat(boolean autoReconnect)
-    {
-        if (doHeartbeat()) {
+
+    public synchronized void heartbeat(boolean autoReconnect) {
+        try {
+            doHeartbeat();
             connected = true;
-        } else {
-            if (null != listener && connected) listener.onDisconnected(this);
+        } catch (Exception e)
+        {
             connected = false;
+            throwError(e);
+
+            if (null != listener && connected) listener.onDisconnected(this);
 
             if (autoReconnect) reconnect();
         }
+
     }
 
     public void close()
     {
-        timer.cancel();
-        doClose();
+        if (null != timer)
+            timer.cancel();
+        try {
+            doClose();
+        } catch (Exception e)
+        {
+            throwError(e);
+        }
+
         if (null != listener && connected) listener.onDisconnected(this);
+
         connected = false;
     }
 
-    protected abstract void doConnecting();
-    protected abstract void doReconnect();
-    protected abstract boolean doHeartbeat();
-    protected abstract void doClose();
+    protected abstract void doConnecting() throws Exception;
+    protected abstract void doReconnect() throws Exception;
+    protected abstract void doHeartbeat() throws Exception;
+    protected abstract void doClose() throws Exception;
 
 
     public boolean isConnected()
@@ -92,8 +119,14 @@ public abstract class AbstractConnector {
         return connected;
     }
 
+    protected void throwError(Exception e)
+    {
+        if (null != listener) listener.onError(this, e);
+    }
+
     public interface ConnectionListener {
         void onConnected(AbstractConnector connector);
         void onDisconnected(AbstractConnector connector);
+        void onError(AbstractConnector connector, Exception e);
     }
 }

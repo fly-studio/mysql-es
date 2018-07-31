@@ -1,12 +1,9 @@
 package com.fly.sync;
 
-import com.fly.sync.dumper.Dumper;
 import com.fly.sync.executor.Executor;
 import com.fly.sync.setting.Setting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Set;
 
 public class Main {
 
@@ -22,14 +19,20 @@ public class Main {
         }
 
         Executor executor = new Executor();
+
         try {
             executor.connect();
             executor.run();
-            executor.close();
+            executor.await();
         } catch (Exception e)
         {
             logger.error(e.getMessage(), e);
+            //System.exit(0);
+        } finally {
+            executor.close();
         }
+
+        logger.info("Run exit.");
     }
 
 
