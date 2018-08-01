@@ -2,7 +2,6 @@ package com.fly.sync.executor;
 
 import com.fly.sync.Main;
 import com.fly.sync.es.Es;
-import com.fly.sync.exception.EsException;
 import com.fly.sync.exception.FatalException;
 import com.fly.sync.mysql.MySql;
 import com.fly.sync.setting.River;
@@ -10,7 +9,6 @@ import com.fly.sync.setting.Setting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;

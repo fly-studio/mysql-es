@@ -3,7 +3,10 @@ package com.fly.sync.setting;
 import com.fly.core.text.json.Jsonable;
 import com.squareup.moshi.Json;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class River extends Jsonable {
 

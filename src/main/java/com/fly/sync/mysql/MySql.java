@@ -1,20 +1,15 @@
 package com.fly.sync.mysql;
 
 import com.fly.sync.contract.AbstractConnector;
-import com.fly.sync.contract.DaoInterface;
 import com.fly.sync.exception.DisconnectionException;
 import com.fly.sync.exception.RecordNotFoundException;
-import com.fly.sync.mysql.model.Database;
 import com.fly.sync.mysql.model.DatabaseDao;
 import com.fly.sync.mysql.model.TableDao;
 import com.fly.sync.setting.River;
 import com.mysql.cj.jdbc.Driver;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-
-import java.util.Map;
 
 public class MySql  {
 
