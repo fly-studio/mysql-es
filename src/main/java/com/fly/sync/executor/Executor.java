@@ -1,15 +1,16 @@
 package com.fly.sync.executor;
 
 import com.fly.sync.Main;
+import com.fly.sync.es.Es;
 import com.fly.sync.exception.EsException;
 import com.fly.sync.exception.FatalException;
+import com.fly.sync.mysql.MySql;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -17,7 +18,8 @@ import java.util.concurrent.TimeUnit;
 
 public class Executor {
 
-    private EsExecutor esExecutor;
+    private Es es;
+    private MySql mySql;
     //private Map<River.Database, Thread> threads = new HashMap<>();
     private static boolean running = false;
     public final static Logger logger = LoggerFactory.getLogger(Main.class);
@@ -25,18 +27,33 @@ public class Executor {
 
     public Executor()
     {
-        esExecutor = new EsExecutor(Setting.river, true);
+        es = new Es(Setting.river, true);
+        mySql = new MySql(Setting.river, true);
     }
 
     public void connect() throws Exception
     {
-        if (!esExecutor.connect())
-            throw new EsException("Can not connect to Elasticsearch.");
+        es.connect();
+        logger.info("Connect to Elasticsearch.");
+        mySql.connect();
+        logger.info("Connected to MySQL.");
+
+    }
+
+    public void validate() throws Exception
+    {
+        mySql.validate();
     }
 
     public void close()
     {
-        esExecutor.close();
+        try {
+            es.close();
+            mySql.close();
+        } catch (Exception e)
+        {
+
+        }
     }
 
     public void run()

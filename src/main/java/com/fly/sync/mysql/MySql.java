@@ -1,13 +1,19 @@
 package com.fly.sync.mysql;
 
 import com.fly.sync.contract.AbstractConnector;
+import com.fly.sync.contract.DaoInterface;
+import com.fly.sync.exception.DisconnectionException;
+import com.fly.sync.exception.RecordNotFoundException;
+import com.fly.sync.mysql.model.Database;
+import com.fly.sync.mysql.model.DatabaseDao;
+import com.fly.sync.mysql.model.TableDao;
 import com.fly.sync.setting.River;
-import com.mysql.jdbc.Driver;
+import com.mysql.cj.jdbc.Driver;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class MySql  {
@@ -15,134 +21,109 @@ public class MySql  {
     public Connector connector;
     private River river;
 
-    public MySql(River river, River.Database database) {
+    public MySql(River river, boolean autoReconnect) {
         this.river = river;
-        connector = new Connector(river, database, true);
+        connector = new Connector(river, autoReconnect);
     }
 
-    public Connection getConnection()
+    public boolean connect() throws Exception
     {
-        return connector.getConnection();
+        return this.connector.connect();
     }
 
-    protected PreparedStatement newStatement(String sql, String... params) throws SQLException
+    public void close() throws Exception
     {
-        PreparedStatement statement = getConnection().prepareStatement(sql);
-
-        for (int i = 0; i < params.length; ++i)
-            statement.setString(i, params[i]);
-
-        return statement;
+        this.connector.close();
     }
 
-    public void execute(String sql, String... params) throws SQLException
+    public Jdbi getClient()
     {
-        PreparedStatement statement = newStatement(sql, params);
-        statement.execute();
-
-        statement.close();
+        return connector.getClient();
     }
 
-    public List<Map<String, String>> executeQuery(String sql, String... params) throws SQLException
+    public boolean exists(String db)
     {
-        PreparedStatement statement = newStatement(sql, params);
-        ResultSet rs = statement.executeQuery();
-
-        return fetchArray(rs);
+        return getClient().withExtension(DatabaseDao.class, dao -> dao.find(db) != null);
     }
 
-    public List<Map<String, String>> fetchArray(ResultSet rs)
+    public boolean exists(String db, String table)
     {
-        List<String> columns = fetchColumns(rs);
-        List<Map<String, String>> records = new ArrayList<>();
+        return getClient().withExtension(TableDao.class, dao -> dao.find(db, table) != null);
+    }
 
-        if (columns.isEmpty())
-            return records;
-        try {
-            while (rs.next())
-            {
-                Map<String, String> line = new HashMap<>();
-                for (String col: columns
-                     ) {
-                    line.put(col, rs.getString(col));
-                }
-                records.add(line);
+    public void validate() throws RecordNotFoundException
+    {
+        for (River.Database database:
+             river.databases) {
+            if (!exists(database.db))
+                throw new RecordNotFoundException("Database \"" + database.db+ "\" not exists");
+
+            for (String table: database.tablesBeRelated.keySet()
+                 ) {
+                if (!exists(database.db, table))
+                    throw new RecordNotFoundException("Table \"" + database.db + "." + table + "\" not exists");
             }
-        } catch (Exception e)
-        {
-
         }
-
-        return records;
-    }
-
-    public List<String> fetchColumns(ResultSet rs)
-    {
-        List<String> columns = new ArrayList<>();
-        try
-        {
-            ResultSetMetaData metaData = rs.getMetaData();
-            for (int i = 0; i < metaData.getColumnCount(); i++) {
-                columns.add(metaData.getColumnName(i));
-            }
-        } catch (Exception e)
-        {
-
-        }
-        return columns;
     }
 
     public class Connector extends AbstractConnector
     {
-        private Connection connection;
-        private River.Database database;
+        private Jdbi jdbi;
+        private Handle connection;
 
-        public Connector(River river, River.Database database, boolean autoReconnect) {
+        public Connector(River river, boolean autoReconnect) {
             super(river, autoReconnect);
-            this.database = database;
         }
 
         @Override
-        protected void doConnecting() {
+        protected void doConnecting() throws Exception
+        {
+            if (null != jdbi)
+                return;
             StringBuilder sb = new StringBuilder();
             sb.append("jdbc:mysql://")
                 .append(river.my.host)
                 .append(":")
                 .append(river.my.port)
                 .append("/")
-                .append(database.db);
+                .append("INFORMATION_SCHEMA")
+                .append("?useUnicode=true&characterEncoding=")
+                .append(river.charset);
+            if (autoReconnect)
+                sb.append("&autoReconnect=true&failOverReadOnly=true");
 
-            try {
-                new Driver();
-
-                connection = DriverManager.getConnection(sb.toString(), river.my.user, river.my.password);
-
-            } catch (SQLException e) {
-
-            }
+            new Driver();
+            jdbi = Jdbi.create(sb.toString(), river.my.user, river.my.password);
+            jdbi.installPlugin(new SqlObjectPlugin());
+            //connection = jdbi.open();
         }
 
         @Override
-        protected void doReconnect() {
-
+        protected void doReconnect() throws Exception {
+            jdbi = null;
+            doConnecting();
         }
 
         @Override
         protected void doHeartbeat() throws Exception
         {
-            Statement statement = connection.createStatement();
-            statement.execute("SELECT 1;");
-            statement.close();
+            Integer i = jdbi.withHandle(handle ->
+                 handle.createQuery("SELECT 1").mapTo(Integer.class).findOnly()
+            );
+
+            if (i == null || !i.equals(1))
+                throw new DisconnectionException("MySQL: Heart beat Fails.");
         }
 
         @Override
         protected void doClose() throws Exception {
 
-            connection.close();
+
         }
 
-        public Connection getConnection() {
-            return connection;
+
+        public Jdbi getClient() {
+            return jdbi;
         }
     }
 }

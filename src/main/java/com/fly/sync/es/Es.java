@@ -1,4 +1,4 @@
-package com.fly.sync.executor;
+package com.fly.sync.es;
 
 import com.fly.core.io.IoUtils;
 import com.fly.sync.contract.AbstractConnector;
@@ -25,24 +25,24 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-public class EsExecutor {
+public class Es {
 
     public Connector connector;
     private River river;
-    public final static Logger logger = LoggerFactory.getLogger(EsExecutor.class);
+    public final static Logger logger = LoggerFactory.getLogger(Es.class);
 
-    public EsExecutor(River river, boolean autoReconnect) {
+    public Es(River river, boolean autoReconnect) {
         this.river = river;
         this.connector = new Connector(river, autoReconnect);
 
     }
 
-    public boolean connect()
+    public boolean connect() throws Exception
     {
         return this.connector.connect();
     }
 
-    public void close()
+    public void close() throws Exception
     {
         this.connector.close();
     }
@@ -137,34 +137,23 @@ public class EsExecutor {
                 credentialsProvider.setCredentials(AuthScope.ANY,
                         new UsernamePasswordCredentials(river.es.user, river.es.password != null ? river.es.password : ""));
 
-                builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
-                    @Override
-                    public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-                        return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-                    }
-                });
-
+                builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
             }
 
             client = new RestHighLevelClient(builder);
             restClient = client.getLowLevelClient();
         }
 
-        protected void doReconnect()
+        protected void doReconnect() throws Exception
         {
             client = null;
             connect();
         }
 
-        protected void doClose()
+        protected void doClose() throws Exception
         {
             if (null != client) {
-                try {
-                    client.close();
-                } catch (Exception e)
-                {
-                    logger.error(e.getMessage(), e);
-                }
+                client.close();
             }
 
             client = null;

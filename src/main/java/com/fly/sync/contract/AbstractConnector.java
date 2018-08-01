@@ -40,41 +40,34 @@ public abstract class AbstractConnector {
         return river;
     }
 
-    public boolean connect()
+    public boolean connect() throws Exception
     {
-        try {
-            doConnecting();
-        } catch (Exception e)
-        {
-            throwError(e);
-            return false;
-        }
+        doConnecting();
 
-        heartbeat(false);
+        tryHeartbeat();
         if (!isConnected())
             return false;
 
         if (null != listener) listener.onConnected(this);
 
-        if (null != timer)
-            timer.cancel();
-
-        timer = new Timer(true);
-        timer.schedule(task, INTERVAL, INTERVAL);
+        if (null == timer)
+        {
+            timer = new Timer(true);
+            timer.schedule(task, INTERVAL, INTERVAL);
+        }
 
         return true;
     }
 
-    public void reconnect()
+    public void reconnect() throws Exception
     {
-        try {
-            doReconnect();
-        } catch (Exception e)
-        {
-            throwError(e);
-        }
+        doReconnect();
     }
 
+    public synchronized void tryHeartbeat() throws Exception
+    {
+        doHeartbeat();
+    }
 
     public synchronized void heartbeat(boolean autoReconnect) {
         try {
@@ -87,25 +80,31 @@ public abstract class AbstractConnector {
 
             if (null != listener && connected) listener.onDisconnected(this);
 
-            if (autoReconnect) reconnect();
+            if (autoReconnect)
+                try {
+                    reconnect();
+                } catch (Exception e1)
+                {
+                    throwError(e1);
+                }
         }
 
     }
 
-    public void close()
+    public void close() throws Exception
     {
-        if (null != timer)
+        if (null != timer) {
             timer.cancel();
-        try {
-            doClose();
-        } catch (Exception e)
-        {
-            throwError(e);
+            timer = null;
         }
 
-        if (null != listener && connected) listener.onDisconnected(this);
+        doClose();
 
+        boolean _connected = connected;
         connected = false;
+
+        if (null != listener && _connected) listener.onDisconnected(this);
+
     }
 
     protected abstract void doConnecting() throws Exception;

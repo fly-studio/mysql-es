@@ -22,6 +22,7 @@ public class Main {
 
         try {
             executor.connect();
+            executor.validate();
             executor.run();
             executor.await();
         } catch (Exception e)

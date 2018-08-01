@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Setting {
@@ -135,22 +136,13 @@ public class Setting {
         try {
 
             river = Jsonable.fromJson(River.class, IoUtils.readJson(file));
+            river.init();
         } catch (IOException e)
         {
             throw new ConfigException("\"" + RIVER_FILE + "\" JSON format ERROR.", e);
         }
 
-        for(River.Database db : river.databases)
-        {
-            for(Map.Entry<String, River.Table> entry: db.tables.entrySet())
-            {
-                String dbName = db.db;
-                River.Table table = entry.getValue();
-                table.index = replaceDBValue(table.index, dbName, entry.getKey());
-                table.type = replaceDBValue(table.type, dbName, entry.getKey());
 
-            }
-        }
         Setting.river = river;
         return river;
     }
@@ -192,10 +184,6 @@ public class Setting {
 
     }
 
-    private static String replaceDBValue(String str, String db, String table)
-    {
-        return str.replace("${DB}", db).replace("${TABLE}", table);
-    }
 
     public static void readSettings() throws Exception
     {

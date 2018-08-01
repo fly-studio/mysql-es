@@ -3,9 +3,7 @@ package com.fly.sync.setting;
 import com.fly.core.text.json.Jsonable;
 import com.squareup.moshi.Json;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class River extends Jsonable {
 
@@ -26,6 +24,18 @@ public class River extends Jsonable {
         return null;
     }
 
+    public void init()
+    {
+        for(River.Database database : databases)
+            database.init();
+
+    }
+
+    private static String replaceDBValue(String str, String db, String table)
+    {
+        return str.replace("${DB}", db).replace("${TABLE}", table);
+    }
+
     public enum SyncType {
         always,
         once
@@ -40,11 +50,67 @@ public class River extends Jsonable {
 
     public static class Database {
         public String db = "";
-        public Map<String, Table> tables = new HashMap<String, Table>();
+        public Map<String, Table> tables = new HashMap<>();
+
+        // set in init
+        // relationKey => Relation
+        public Map<String, Relation> relations = new HashMap<>();
+        // table => [...relationKey];
+        public Map<String, List<String>> tablesBeRelated = new HashMap<>();
 
         public Table getTable(String name)
         {
             return tables.get(name);
+        }
+
+        private void init()
+        {
+            for(Map.Entry<String, River.Table> entry: tables.entrySet())
+            {
+                String tableName = entry.getKey();
+                River.Table table = entry.getValue();
+                table.index = replaceDBValue(table.index, db, tableName);
+                table.type = replaceDBValue(table.type, db, tableName);
+
+                putTableBeRelated(tableName, null);
+
+                // add full name of relations
+                for (Map.Entry<String, River.Relation> relationEntry: table.relations.entrySet()
+                ) {
+                    String relationKey = tableName + "." + relationEntry.getKey();
+                    relations.put(relationKey, relationEntry.getValue());
+                    putTableBeRelated(relationEntry.getValue().table, relationKey);
+                }
+
+                // modify to full name of withs
+                Map<String, River.SyncType> temp = new HashMap<>();
+                for (Map.Entry<String, River.SyncType> withEntry: table.with.entrySet()
+                ) {
+                    String key = withEntry.getKey();
+                    if (key != null && !key.contains("."))
+                        key = tableName + "." + key;
+
+                    temp.put(key, withEntry.getValue());
+                }
+                table.with.clear();
+                table.with.putAll(temp);
+
+            }
+        }
+
+        protected void putTableBeRelated(String tableName, String relationKey)
+        {
+            if (!tablesBeRelated.containsKey(tableName))
+                tablesBeRelated.put(tableName, new ArrayList<>());
+
+            List<String> list = tablesBeRelated.get(tableName);
+
+            if (null == relationKey || list.contains(relationKey)) {
+                return;
+            }
+
+            list.add(relationKey);
+
         }
     }
 
