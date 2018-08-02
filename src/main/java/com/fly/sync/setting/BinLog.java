@@ -8,6 +8,12 @@ import java.util.Map;
 public class BinLog extends Jsonable {
     public Map<String, Position> lists = new HashMap<String, Position>();
 
+    public boolean isEmpty(String db)
+    {
+        Position position = get(db);
+        return position == null ? true : position.isEmpty();
+    }
+
     public void set(String db, Position position)
     {
         synchronized (BinLog.class) {

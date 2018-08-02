@@ -6,6 +6,9 @@ import com.fly.sync.exception.FatalException;
 import com.fly.sync.mysql.MySql;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
+import io.reactivex.Observable;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +64,7 @@ public class Executor {
 
         running = true;
 
-        threadPool = Executors.newFixedThreadPool(Setting.river.databases.size());
+        threadPool = Executors.newFixedThreadPool(Setting.river.databases.size() * 3);
 
         for (River.Database database: Setting.river.databases
                      ) {
@@ -95,6 +98,17 @@ public class Executor {
                 }*/
             }
         }
+    }
 
+    public Es getEs() {
+        return es;
+    }
+
+    public MySql getMySql() {
+        return mySql;
+    }
+
+    public static boolean isRunning() {
+        return running;
     }
 }

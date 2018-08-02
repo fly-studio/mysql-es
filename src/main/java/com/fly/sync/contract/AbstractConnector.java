@@ -1,5 +1,6 @@
 package com.fly.sync.contract;
 
+import com.fly.sync.exception.OutOfRetryException;
 import com.fly.sync.setting.River;
 
 import java.util.Timer;
@@ -62,6 +63,27 @@ public abstract class AbstractConnector {
     public void reconnect() throws Exception
     {
         doReconnect();
+    }
+
+    public void waitForConnected(int count, int sleep)
+    {
+        int i = 0;
+        while (!isConnected()) {
+            if (count > 0 && ++i > count)
+                throw new OutOfRetryException("Try to reconnect for " + String.valueOf(count) + " times, Still Failed.");
+            try {
+                reconnect();
+
+            }  catch (Exception e) {
+
+                try {
+                    Thread.sleep(sleep);
+                } catch (InterruptedException e1)
+                {
+                    return;
+                }
+            }
+        }
     }
 
     public synchronized void tryHeartbeat() throws Exception

@@ -1,14 +1,15 @@
 package com.fly.sync.setting;
 
 import com.fly.core.text.json.Jsonable;
+import com.fly.sync.Main;
 import com.squareup.moshi.Json;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class River extends Jsonable {
+    public final static Logger logger = LoggerFactory.getLogger(Main.class);
 
     public Host my;
     public Host es;
@@ -56,10 +57,8 @@ public class River extends Jsonable {
         public Map<String, Table> tables = new HashMap<>();
 
         // set in init
-        // relationKey => Relation
-        public Map<String, Relation> relations = new HashMap<>();
-        // table => [...relationKey];
-        public Map<String, List<String>> tablesBeRelated = new HashMap<>();
+        // table => [...{relationKey, relation, parentTable, with}];
+        public Map<String, List<Associate>> associates = new HashMap<>();
 
         public Table getTable(String name)
         {
@@ -72,61 +71,93 @@ public class River extends Jsonable {
             {
                 String tableName = entry.getKey();
                 River.Table table = entry.getValue();
+                table.tableName = tableName;
                 table.index = replaceDBValue(table.index, db, tableName);
                 table.type = replaceDBValue(table.type, db, tableName);
 
-                putTableBeRelated(tableName, null);
+                table.fixAsteriskColumns();
+                addAssociate(tableName);
 
-                // add full name of relations
+                // add to associate
                 for (Map.Entry<String, River.Relation> relationEntry: table.relations.entrySet()
                 ) {
+
+                    if (relationEntry.getKey() == null || relationEntry.getKey().isEmpty())
+                        continue;
+
                     String relationKey = tableName + "." + relationEntry.getKey();
-                    relations.put(relationKey, relationEntry.getValue());
-                    putTableBeRelated(relationEntry.getValue().table, relationKey);
+                    Relation relation = relationEntry.getValue();
+                    relation.fixAsteriskColumns();
+
+                    addAssociate(relationEntry.getValue().tableName, relationKey, table, relation);
                 }
 
-                // modify to full name of withs
-                Map<String, River.SyncType> temp = new HashMap<>();
+                // add with to associate
                 for (Map.Entry<String, River.SyncType> withEntry: table.with.entrySet()
                 ) {
-                    String key = withEntry.getKey();
-                    if (key != null && !key.contains("."))
-                        key = tableName + "." + key;
+                    String relationKey = withEntry.getKey();
+                    if (relationKey == null) continue;
 
-                    temp.put(key, withEntry.getValue());
+                    if (!relationKey.contains("."))
+                        relationKey = tableName + "." + relationKey;
+
+                    addWithToAssociate(relationKey, table, withEntry.getValue());
                 }
-                table.with.clear();
-                table.with.putAll(temp);
 
             }
         }
 
-        protected void putTableBeRelated(String tableName, String relationKey)
+        public Associate findAssociate(String relationKey)
         {
-            if (!tablesBeRelated.containsKey(tableName))
-                tablesBeRelated.put(tableName, new ArrayList<>());
-
-            List<String> list = tablesBeRelated.get(tableName);
-
-            if (null == relationKey || list.contains(relationKey)) {
-                return;
+            for (Map.Entry<String, List<Associate>> entry: associates.entrySet()
+                 ) {
+                for (Associate associates: entry.getValue()
+                     ) {
+                    if (associates.relationKey.equals(relationKey))
+                        return associates;
+                }
             }
+            return null;
+        }
 
-            list.add(relationKey);
+        protected void addAssociate(String relatedTableName)
+        {
+            if (!associates.containsKey(relatedTableName))
+                associates.put(relatedTableName, new ArrayList<>());
+        }
 
+        protected void addAssociate(String relatedTableName, String relationKey, Table parentTable, Relation relation)
+        {
+            addAssociate(relatedTableName);
+
+            List<Associate> list = associates.get(relatedTableName);
+
+            Associate related = new Associate(relationKey, parentTable, relation);
+
+            list.add(related);
+        }
+
+        protected void addWithToAssociate(Associate associate, Table parentTable, SyncType syncType)
+        {
+            associate.addWith(parentTable, syncType);
+        }
+
+        protected void addWithToAssociate(String relationKey, Table parentTable, SyncType syncType)
+        {
+            Associate associate = findAssociate(relationKey);
+            if (associate != null)
+                addWithToAssociate(associate, parentTable, syncType);
         }
     }
 
-    public static class Table {
+    public static class Table extends TableBase {
         public boolean sync = true;
         public String index;
         public String template = "";
         public String type = "_doc";
         public String[] id = new String[] {"id"};
-        public String[] columns = new String[] {"*"};
-        @Json(name = "column_alias") public Map<String, String> columnAlias = new HashMap<String, String>();
-        public Map<String, Relation> relations = new HashMap<String, Relation>();
-        public Map<String, SyncType> with = new HashMap<String, SyncType>();
+        public Map<String, Relation> relations = new HashMap<>();
+        public Map<String, SyncType> with = new HashMap<>();
 
         public Relation getRelation(String name)
         {
@@ -139,12 +170,65 @@ public class River extends Jsonable {
         }
     }
 
-    public static class Relation {
-        public String table;
+    public static class Relation extends TableBase {
         public String foreign;
         public String local;
-        public String[] columns = new String[] {"*"};
-        @Json(name = "column_alias") public Map<String, String> columnAlias = new HashMap<String, String>();
+    }
 
+    private static class TableBase {
+        @Json(name = "table") public String tableName;
+        public List<String> columns = Arrays.asList("*");
+        @Json(name = "column_alias") public Map<String, String> columnAlias = new HashMap<>();
+
+        public void fixColumns(List<String> allColumns)
+        {
+            if (!columns.contains("*")) {
+                if (columns.retainAll(allColumns))
+                    logger.warn("Table {} columns reset to {}.", tableName, columns);
+            }
+
+            columnAlias.entrySet().removeIf(entry -> !allColumns.contains(entry.getKey()));
+        }
+
+        public void fixAsteriskColumns()
+        {
+            if (columns.isEmpty() || (columns.contains("*") && columns.size() != 1)) {
+                columns = Arrays.asList("*");
+                logger.warn("Table {} columns reset to [\"*\"].", tableName);
+            }
+            if (columnAlias.size() > 0)
+                columnAlias.entrySet().removeIf(entry -> entry.getKey().equals("*") || entry.getKey().equals(entry.getValue()));
+        }
+
+    }
+
+    public static class Associate {
+        String relationKey;
+        Table parentTable;
+        Relation relation;
+        List<With> withs = new ArrayList<>();
+
+        public Associate(String relationKey, Table parentTable, Relation relation) {
+            this.relationKey = relationKey;
+            this.parentTable = parentTable;
+            this.relation = relation;
+        }
+
+        public void addWith(Table parentTable, SyncType syncType)
+        {
+            withs.add(new With(relationKey, parentTable, syncType));
+        }
+    }
+
+    public static class With {
+        String relationKey;
+        SyncType syncType;
+        Table parentTable;
+
+        public With(String relationKey, Table parentTable, SyncType syncType) {
+            this.relationKey = relationKey;
+            this.syncType = syncType;
+            this.parentTable = parentTable;
+        }
     }
 }

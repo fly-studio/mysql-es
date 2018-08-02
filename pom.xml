@@ -66,6 +66,11 @@
             <artifactId>jdbi3-sqlobject</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.reactivex.rxjava2</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client</artifactId>
             <version>6.3.2</version>

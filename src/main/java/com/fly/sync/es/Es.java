@@ -3,6 +3,7 @@ package com.fly.sync.es;
 import com.fly.core.io.IoUtils;
 import com.fly.sync.contract.AbstractConnector;
 import com.fly.sync.exception.DisconnectionException;
+import com.fly.sync.exception.OutOfRetryException;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
 import org.apache.http.HttpHost;
@@ -38,36 +39,44 @@ public class Es {
 
     public boolean connect() throws Exception
     {
-        return this.connector.connect();
+        return connector.connect();
     }
 
     public void close() throws Exception
     {
-        this.connector.close();
+        connector.close();
     }
 
-    public RestHighLevelClient getClient() throws DisconnectionException
+    public void waitForConnected(int count, int sleep)
     {
-        if (!this.connector.isConnected())
-            throw new DisconnectionException("Disconnection on ElasticSearch.");
-
-        return this.connector.getClient();
+        connector.waitForConnected(count, sleep);
     }
 
-    public RestClient getRestClient() throws DisconnectionException
+
+    public RestHighLevelClient getClient() throws OutOfRetryException
     {
-        if (!this.connector.isConnected())
-            throw new DisconnectionException("Disconnection on ElasticSearch.");
+        if(!connector.isConnected())
+        {
+            waitForConnected(10, 5000);
+        }
+
+        return connector.getClient();
+    }
+
+    public RestClient getRestClient() throws OutOfRetryException
+    {
+        if (!connector.isConnected())
+            waitForConnected(10, 5000);
 
         return this.connector.getRestClient();
     }
 
-    public void createIndex(River.Table table) throws DisconnectionException, IOException
+    public void createIndex(River.Table table) throws OutOfRetryException, IOException
     {
         createIndex(table, false);
     }
 
-    public void createIndex(River.Table table, boolean force) throws DisconnectionException, IOException
+    public void createIndex(River.Table table, boolean force) throws OutOfRetryException, IOException
     {
         GetIndexRequest getIndexRequest = new GetIndexRequest();
         getIndexRequest.indices(table.index);
@@ -91,12 +100,12 @@ public class Es {
 
     }
 
-    public void createIndices(River.Database database) throws DisconnectionException, IOException
+    public void createIndices(River.Database database) throws OutOfRetryException, IOException
     {
         createIndices(database, false);
     }
 
-    public void createIndices(River.Database database, boolean force) throws DisconnectionException, IOException
+    public void createIndices(River.Database database, boolean force) throws OutOfRetryException, IOException
     {
         for (Map.Entry<String, River.Table> entry: database.tables.entrySet()
                 ) {
@@ -161,7 +170,6 @@ public class Es {
         public void doHeartbeat() throws Exception
         {
             client.ping();
-            //restClient.performRequest("GET", "/");
         }
     }
 

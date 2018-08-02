@@ -3,13 +3,16 @@ package com.fly.sync.mysql;
 import com.fly.sync.contract.AbstractConnector;
 import com.fly.sync.exception.DisconnectionException;
 import com.fly.sync.exception.RecordNotFoundException;
+import com.fly.sync.mysql.model.ColumnDao;
 import com.fly.sync.mysql.model.DatabaseDao;
 import com.fly.sync.mysql.model.TableDao;
 import com.fly.sync.setting.River;
 import com.mysql.cj.jdbc.Driver;
-import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
+
+import java.util.List;
+import java.util.Map;
 
 public class MySql  {
 
@@ -46,6 +49,11 @@ public class MySql  {
         return getClient().withExtension(TableDao.class, dao -> dao.find(db, table) != null);
     }
 
+    public List<String> columns(String db, String table)
+    {
+        return getClient().withExtension(ColumnDao.class, dao -> dao.allNames(db, table));
+    }
+
     public void validate() throws RecordNotFoundException
     {
         for (River.Database database:
@@ -53,10 +61,22 @@ public class MySql  {
             if (!exists(database.db))
                 throw new RecordNotFoundException("Database \"" + database.db+ "\" not exists");
 
-            for (String table: database.tablesBeRelated.keySet()
+            for (String table: database.associates.keySet()
                  ) {
                 if (!exists(database.db, table))
                     throw new RecordNotFoundException("Table \"" + database.db + "." + table + "\" not exists");
+            }
+
+            for (Map.Entry<String, River.Table> tableEntry: database.tables.entrySet()
+                 ) {
+                River.Table table = tableEntry.getValue();
+                table.fixColumns(columns(database.db, table.tableName));
+
+                for (Map.Entry<String, River.Relation> relationEntry: tableEntry.getValue().relations.entrySet()
+                     ) {
+                    River.Relation relation = relationEntry.getValue();
+                    relation.fixColumns(columns(database.db, relation.tableName));
+                }
             }
         }
     }
@@ -64,7 +84,6 @@ public class MySql  {
     public class Connector extends AbstractConnector
     {
         private Jdbi jdbi;
-        private Handle connection;
 
         public Connector(River river, boolean autoReconnect) {
             super(river, autoReconnect);
