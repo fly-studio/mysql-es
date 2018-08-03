@@ -1,39 +1,62 @@
 package com.fly.sync.mysql;
 
-import com.fly.sync.contract.DatabaseListener;
+import com.fly.sync.action.ChangePostionAction;
+import com.fly.sync.action.InsertAction;
+import com.fly.sync.contract.AbstractAction;
+import com.fly.sync.contract.DbFactory;
+import com.fly.sync.es.Es;
 import com.fly.sync.exception.FatalDumpException;
+import com.fly.sync.mysql.parser.InsertParser;
+import com.fly.sync.mysql.parser.PositionParser;
 import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.Config;
 import com.fly.sync.setting.River;
 import com.sun.istack.internal.NotNull;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableOnSubscribe;
+import io.reactivex.Scheduler;
+import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
-public class Dumper {
+public class Dumper implements DbFactory {
 
     private Config config;
     private River river;
-    private River.Database database;
-    private DatabaseListener listener;
+    private DbFactory dbFactory;
     private BinLog.Position position = new BinLog.Position();
 
     public final static Logger logger = LoggerFactory.getLogger(Dumper.class);
 
-    public Dumper(@NotNull Config config, @NotNull River river, @NotNull River.Database database, @NotNull DatabaseListener listener)
+    public Dumper(@NotNull Config config, @NotNull River river, DbFactory dbFactory)
     {
         this.config = config;
         this.river = river;
-        this.database = database;
-        this.listener = listener;
+        this.dbFactory = dbFactory;
     }
 
-    public void run()
+    @Override
+    public Es getEs() {
+        return dbFactory.getEs();
+    }
+
+    @Override
+    public MySql getMySql() {
+        return dbFactory.getMySql();
+    }
+
+    @Override
+    public River.Database getRiverDatabase() {
+        return dbFactory.getRiverDatabase();
+    }
+
+    public Flowable<AbstractAction> run(Scheduler scheduler)
     {
         StringBuilder cmd = new StringBuilder();
 
@@ -43,6 +66,7 @@ public class Dumper {
          * --quick --no-create-info --skip-extended-insert --set-gtid-purged=OFF --default-character-set=utf8 \
          * db table1 table2 table3 table4
          */
+        River.Database database = getRiverDatabase();
         cmd.append(config.mysqldump)
             .append(" --host=")
             .append(river.my.host)
@@ -61,112 +85,131 @@ public class Dumper {
              ) {
             cmd.append(" ");
             cmd.append(name);
-            listener.onCreateTable(database, name);
         }
 
         logger.info(cmd.toString().replace(river.my.password, "*"));
-
+        Process process;
+        Flowable<List<AbstractAction>> flowable;
         try {
-            Process process = Runtime.getRuntime().exec(cmd.toString());
-            logger.info("Dump database [{}] from mysqldump.", database.db);
-            errorThread(process);
-            dataThread(process);
-            process.waitFor();
-            process.destroy();
-        } catch (IOException | InterruptedException e)
+            process = Runtime.getRuntime().exec(cmd.toString());
+
+        } catch (IOException e)
         {
-            listener.onError(database, new FatalDumpException(e));
+            return Flowable.error(new FatalDumpException(e));
         }
+
+        logger.info("Dump database [{}] from mysqldump.", database.db);
+
+        return Flowable.merge(
+                errorObservable(process).subscribeOn(scheduler),
+                dataObservable(process).subscribeOn(scheduler)
+            )
+            .doOnError(
+                    throwable -> position.reset()
+            ).doFinally(
+                    () -> process.destroy()
+            ).observeOn(Schedulers.newThread());
 
     }
 
-    private void dataThread(final Process process)
+    private Flowable<AbstractAction> dataObservable(final Process process)
     {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String sql;
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        return Flowable.create((FlowableOnSubscribe<AbstractAction>) flowableEmitter -> {
+            String sql;
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            System.out.println("data");
 
-                try {
-                    while((sql = bufferedReader.readLine()) != null)
-                    {
-                        if (sql.startsWith("CHANGE MASTER TO MASTER_LOG_FILE"))
-                        {
-                            triggerMaster(sql);
-                        } else if (sql.startsWith("INSERT INTO")){
-                            triggerInsert(sql);
-                        } else {
-                            logger.info("Skip SQL {} ", sql);
-                        }
-                    }
-
-                } catch (IOException e)
+            try {
+                while(true)
                 {
-                    process.destroy();
-                    position.reset();
-                    listener.onError(database, new FatalDumpException(e));
-                } finally {
-                    try {
-                        bufferedReader.close();
-                    } catch (Exception e) {}
-                }
-                logger.info("Dump database: \"{}\" complete;", database.db);
+                    if (flowableEmitter.requested() == 0)
+                        continue;
 
-                // change the binlog after insert
+                    sql = bufferedReader.readLine();
+                    if (sql  == null) break;
+
+                    if (sql.startsWith("CHANGE MASTER TO MASTER_LOG_FILE"))
+                    {
+                        parsePosition(sql);
+                    } else if (sql.startsWith("INSERT INTO")){
+                        flowableEmitter.onNext(parseInsert(sql));
+                    } else {
+                        logger.info("Skip SQL {} ", sql);
+                    }
+                }
+
                 if (!position.isEmpty())
-                    listener.onPositionChange(database, position);
-            }
-        }).start();
-    }
+                    flowableEmitter.onNext(ChangePostionAction.create(position));
 
-    private void errorThread(final Process process){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String s;
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                flowableEmitter.onComplete();
+            } catch (IOException e)
+            {
+                flowableEmitter.onError(new FatalDumpException(e));
 
+                //throw new FatalDumpException(e);
+            } finally {
                 try {
-                    while((s = bufferedReader.readLine()) != null)
-                    {
-                        if (s.contains("[Warning]"))
-                            continue;
+                    bufferedReader.close();
+                } catch (Exception e) {}
+            }
+            logger.info("Dump database: \"{}\" complete;", getRiverDatabase().db);
 
-                        process.destroy();
-                        position.reset();
-                        listener.onError(database, new FatalDumpException(s));
-                        break;
-                    }
-                } catch (IOException e)
+        }, BackpressureStrategy.BUFFER);
+    }
+
+    private Flowable<AbstractAction> errorObservable(final Process process){
+
+        return Flowable.create((FlowableOnSubscribe<AbstractAction>) flowableEmitter -> {
+            String s;
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            System.out.println("error");
+            try {
+                while(true)
                 {
-                    process.destroy();
-                    position.reset();
-                    listener.onError(database, new FatalDumpException(e));
-                } finally {
-                    try {
-                        bufferedReader.close();
-                    } catch (Exception e) {}
+                    if (flowableEmitter.requested() == 0)
+                        continue;
+
+                    s = bufferedReader.readLine();
+                    if (s == null)
+                        break;
+
+                    if (s.contains("[Warning]"))
+                        continue;
+
+                    flowableEmitter.onError(new FatalDumpException(s));
                 }
+
+                flowableEmitter.onComplete();
+
+            } catch (IOException e)
+            {
+                flowableEmitter.onError(new FatalDumpException(e));
+
+            } finally {
+                try {
+                    bufferedReader.close();
+                } catch (Exception e) {}
             }
-        }).start();
+
+        }, BackpressureStrategy.BUFFER);
     }
 
-    private void triggerMaster(String sql) {
-        synchronized (Dumper.class)
-        {
-            Pattern pattern = Pattern.compile("^\\s?+CHANGE\\s?+MASTER\\s?+TO\\s?+MASTER_LOG_FILE\\s?+=\\s?+['\"]([^'\"]*?)['\"],\\s?+MASTER_LOG_POS\\s?+=\\s?+([\\d]*?);", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-            Matcher matcher = pattern.matcher(sql);
-            if (matcher.find()) {
-                position.name = matcher.group(1);
-                position.position = Long.parseLong(matcher.group(2));
-            }
-        }
+    private synchronized void parsePosition(String sql) {
+        BinLog.Position position = PositionParser.parse(sql);
+        if (position != null)
+            this.position.updateFrom(position);
     }
 
-    private void triggerInsert(String sql)
+    private InsertAction parseInsert(String sql)
     {
-        listener.onInsert(database, sql);
+        String table = InsertParser.parseTable(sql);
+        if (table != null && !table.isEmpty())
+        {
+            List<Object> value = InsertParser.parseValue(sql);
+            return value == null ? null : InsertAction.create(table, getMySql().columns(getRiverDatabase().db, table), value);
+        }
+
+        return null;
     }
 
 }

@@ -11,6 +11,7 @@ import com.mysql.cj.jdbc.Driver;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +19,7 @@ public class MySql  {
 
     public Connector connector;
     private River river;
+    private Map<String, List<String>> columnsCache = new HashMap<>();
 
     public MySql(River river, boolean autoReconnect) {
         this.river = river;
@@ -51,7 +53,20 @@ public class MySql  {
 
     public List<String> columns(String db, String table)
     {
-        return getClient().withExtension(ColumnDao.class, dao -> dao.allNames(db, table));
+        return columns(db, table, false);
+    }
+
+    public List<String> columns(String db, String table, boolean force)
+    {
+        String key = db + "." + table;
+        if (!force)
+        {
+            if (columnsCache.containsKey(key))
+                return columnsCache.get(key);
+        }
+
+        List<String> list = getClient().withExtension(ColumnDao.class, dao -> dao.allNames(db, table));
+        return columnsCache.put(key, list);
     }
 
     public void validate() throws RecordNotFoundException

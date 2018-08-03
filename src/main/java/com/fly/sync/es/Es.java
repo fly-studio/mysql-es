@@ -2,7 +2,6 @@ package com.fly.sync.es;
 
 import com.fly.core.io.IoUtils;
 import com.fly.sync.contract.AbstractConnector;
-import com.fly.sync.exception.DisconnectionException;
 import com.fly.sync.exception.OutOfRetryException;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
@@ -169,7 +168,8 @@ public class Es {
 
         public void doHeartbeat() throws Exception
         {
-            client.ping();
+            if (!client.ping())
+                throw new IOException("Ping ElasticSearch Failed.");
         }
     }
 

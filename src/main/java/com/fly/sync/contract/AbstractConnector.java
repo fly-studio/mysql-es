@@ -88,7 +88,12 @@ public abstract class AbstractConnector {
 
     public synchronized void tryHeartbeat() throws Exception
     {
-        doHeartbeat();
+        try {
+            doHeartbeat();
+            connected = true;
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
     public synchronized void heartbeat(boolean autoReconnect) {

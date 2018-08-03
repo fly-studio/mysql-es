@@ -6,8 +6,9 @@ import com.fly.sync.exception.FatalException;
 import com.fly.sync.mysql.MySql;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
-import io.reactivex.Observable;
-import io.reactivex.ObservableOnSubscribe;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.reactivex.Scheduler;
+import io.reactivex.exceptions.MissingBackpressureException;
 import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,18 +17,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Executor {
 
     private Es es;
     private MySql mySql;
-    //private Map<River.Database, Thread> threads = new HashMap<>();
-    private static boolean running = false;
+    private static AtomicBoolean running = new AtomicBoolean(false);
     public final static Logger logger = LoggerFactory.getLogger(Main.class);
     private ExecutorService threadPool;
 
     public Executor()
     {
+        threadPool = Executors.newFixedThreadPool(Setting.river.databases.size() * 10, new ThreadFactoryBuilder().setNameFormat("SubscribeOn-%d").build());
         es = new Es(Setting.river, true);
         mySql = new MySql(Setting.river, true);
     }
@@ -59,43 +61,43 @@ public class Executor {
 
     public void run()
     {
-        if (running)
+        if (running.get())
             throw new RejectedExecutionException("Application is running.");
 
-        running = true;
+        running.set(true);
 
-        threadPool = Executors.newFixedThreadPool(Setting.river.databases.size() * 3);
+        Scheduler scheduler = Schedulers.from(threadPool);
 
         for (River.Database database: Setting.river.databases
                      ) {
-            Thread thread = new ExecutorThread(this, database);
 
-            //threads.put(database, thread);
-            threadPool.submit(thread);
+            new Emiter(this, database).buildFlowable(scheduler)
+
+            .buffer(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize > 120 ? 120 : Setting.config.bulkSize)
+            .subscribeOn(scheduler)
+            .observeOn(scheduler).takeWhile(value -> isRunning())
+            .subscribe(new Subscriber(this, database));
+
         }
-
-        //threadPool.shutdown();
-
     }
 
     public void await() throws InterruptedException
     {
-        while(!threadPool.awaitTermination(100, TimeUnit.MILLISECONDS));
+        while(isRunning())
+        {
+            Thread.sleep(100);
+        }
     }
 
 
-    public void throwException(Thread thread, Exception e)
+    public void throwException(Throwable e)
     {
         synchronized (Executor.class)
         {
             logger.error(e.getMessage(), e);
-            if (e instanceof FatalException)
+            if (e instanceof FatalException || e instanceof MissingBackpressureException)
             {
-                threadPool.shutdownNow();
-                /*for (Map.Entry<River.Database, Thread> entry: threads.entrySet()
-                     ) {
-                    entry.getValue().interrupt();
-                }*/
+                running.set(false);
             }
         }
     }
@@ -109,6 +111,10 @@ public class Executor {
     }
 
     public static boolean isRunning() {
-        return running;
+        return running.get();
+    }
+
+    public void stop() {
+        running.set(false);
     }
 }

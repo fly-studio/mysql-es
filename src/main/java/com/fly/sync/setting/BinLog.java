@@ -11,7 +11,7 @@ public class BinLog extends Jsonable {
     public boolean isEmpty(String db)
     {
         Position position = get(db);
-        return position == null ? true : position.isEmpty();
+        return position == null || position.isEmpty();
     }
 
     public void set(String db, Position position)
@@ -37,6 +37,16 @@ public class BinLog extends Jsonable {
         public String name = "";
         public long position = 0;
 
+        public Position()
+        {
+
+        }
+
+        public Position(String name, long position) {
+            this.name = name;
+            this.position = position;
+        }
+
         public boolean isEmpty()
         {
             return name.isEmpty();
@@ -46,6 +56,11 @@ public class BinLog extends Jsonable {
         {
             name = "";
             position = 0;
+        }
+
+        public void updateFrom(Position position) {
+            this.name = position.name;
+            this.position = position.position;
         }
     }
 

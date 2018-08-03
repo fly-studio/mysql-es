@@ -1,7 +1,6 @@
 package com.fly.sync.contract;
 
 import com.fly.sync.setting.BinLog;
-import com.fly.sync.setting.River;
 
 public interface DatabaseListener {
     void onCreateTable(String table);

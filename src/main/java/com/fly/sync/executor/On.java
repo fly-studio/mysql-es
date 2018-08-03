@@ -1,6 +1,7 @@
 package com.fly.sync.executor;
 
 import com.fly.sync.contract.DatabaseListener;
+import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
 import com.fly.sync.exception.FatalDumpException;
 import com.fly.sync.mysql.MySql;
@@ -10,25 +11,25 @@ import com.fly.sync.setting.Setting;
 
 public class On implements DatabaseListener {
 
-    private ExecutorThread thread;
+    private DbFactory factory;
 
-    public On(ExecutorThread thread) {
-        this.thread = thread;
+    public On(DbFactory factory) {
+        this.factory = factory;
     }
 
     public River.Database getDatabase()
     {
-        return thread.getDatabase();
+        return factory.getRiverDatabase();
     }
 
     public Es getEs()
     {
-        return thread.getEs();
+        return factory.getEs();
     }
 
     public MySql getMySql()
     {
-        return thread.getMySql();
+        return factory.getMySql();
     }
 
     @Override
@@ -61,7 +62,7 @@ public class On implements DatabaseListener {
         if (error instanceof FatalDumpException)
             setBinLog(null);
 
-        thread.throwException(error);
+        //factory.throwException(error);
     }
 
     private void setBinLog(BinLog.Position position)

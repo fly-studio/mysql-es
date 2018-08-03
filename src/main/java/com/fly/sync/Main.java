@@ -28,12 +28,12 @@ public class Main {
         } catch (Exception e)
         {
             logger.error(e.getMessage(), e);
-            //System.exit(0);
         } finally {
             executor.close();
+            executor.stop();
         }
 
-        logger.info("Run exit.");
+        logger.info("exit.");
     }
 
 
