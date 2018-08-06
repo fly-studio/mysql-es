@@ -24,6 +24,7 @@ public class MySql  {
     public MySql(River river, boolean autoReconnect) {
         this.river = river;
         connector = new Connector(river, autoReconnect);
+
     }
 
     public boolean connect() throws Exception
@@ -66,7 +67,8 @@ public class MySql  {
         }
 
         List<String> list = getClient().withExtension(ColumnDao.class, dao -> dao.allNames(db, table));
-        return columnsCache.put(key, list);
+        columnsCache.put(key, list);
+        return list;
     }
 
     public void validate() throws RecordNotFoundException

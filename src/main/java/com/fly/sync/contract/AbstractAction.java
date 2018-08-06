@@ -1,4 +1,7 @@
 package com.fly.sync.contract;
 
-public abstract interface AbstractAction {
+import java.io.Serializable;
+
+public abstract interface AbstractAction extends Serializable {
+    
 }

@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Executor {
@@ -71,12 +70,13 @@ public class Executor {
         for (River.Database database: Setting.river.databases
                      ) {
 
-            new Emiter(this, database).buildFlowable(scheduler)
-
-            .buffer(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize > 120 ? 120 : Setting.config.bulkSize)
-            .subscribeOn(scheduler)
-            .observeOn(scheduler).takeWhile(value -> isRunning())
-            .subscribe(new Subscriber(this, database));
+            new Emiter(this, database)
+                .buildObservable(scheduler)
+                //.compose(FlowableBufferTimed.build(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize > 120 ? 120 : Setting.config.bulkSize))
+                .subscribeOn(scheduler)
+                .observeOn(scheduler)
+                .takeWhile(value -> isRunning())
+                .subscribe(new Consumer(this, database));
 
         }
     }
@@ -116,5 +116,6 @@ public class Executor {
 
     public void stop() {
         running.set(false);
+        threadPool.shutdown();
     }
 }

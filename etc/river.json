@@ -59,7 +59,7 @@
             // see examples below
           },
           // What relations you wanna import to this index
-          "with": {
+          "withs": {
               // "relation name" : "always"  // Sync the subtable's record: always, once
           }
         },
@@ -96,7 +96,7 @@
           },
           // It'll add these columns to this index
           // | id | uid | content | user.id | user.nickname | user.extra.id | user.extra.city |
-          "with": {
+          "withs": {
             "user": "always", // Always sync the subtable's records to this ES's document When it modified
             "user.extra": "always"
           }

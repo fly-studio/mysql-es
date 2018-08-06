@@ -1,17 +1,22 @@
 package com.fly.sync.executor;
 
+import com.fly.sync.action.NullAction;
 import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
 import com.fly.sync.exception.FatalEsException;
 import com.fly.sync.mysql.Dumper;
 import com.fly.sync.mysql.MySql;
+import com.fly.sync.mysql.Relation;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
-import io.reactivex.Flowable;
+import io.reactivex.Observable;
 import io.reactivex.Scheduler;
+import io.reactivex.functions.Function;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Emiter implements DbFactory {
 
@@ -41,18 +46,27 @@ public class Emiter implements DbFactory {
         return executor;
     }
 
-    public Flowable<AbstractAction> buildFlowable(Scheduler scheduler) {
+    public Observable<List<AbstractAction>> buildObservable(Scheduler scheduler) {
 
         createIndices();
 
-        return Flowable.concat(
+        return Observable.concat(
                 runDumper(scheduler),
                 runCanal(scheduler)
-        );
+            )
+            .buffer(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize)
+            .map(new WithRelations())
+            ;
     }
 
-    private Flowable<AbstractAction> runCanal(Scheduler scheduler) {
-        return Flowable.empty();
+    private Observable<AbstractAction> runCanal(Scheduler scheduler) {
+
+        return Observable.interval(1, TimeUnit.SECONDS).map(new Function<Long, AbstractAction>() {
+            @Override
+            public AbstractAction apply(Long aLong) throws Exception {
+                return new NullAction();
+            }
+        });
     }
 
     private void createIndices()
@@ -64,15 +78,25 @@ public class Emiter implements DbFactory {
         }
     }
 
-    private Flowable<AbstractAction> runDumper(Scheduler scheduler)
+    private Observable<AbstractAction> runDumper(Scheduler scheduler)
     {
         if (!Setting.binLog.isEmpty(database.db))
-            return Flowable.empty();
+            return Observable.empty();
 
         Dumper dumper = new Dumper(Setting.config, Setting.river, this);
 
         return dumper.run(scheduler);
 
+    }
+
+    public class WithRelations implements Function<List<AbstractAction>, List<AbstractAction>> {
+
+        @Override
+        public List<AbstractAction> apply(List<AbstractAction> actionList) throws Exception {
+
+            Relation relation = new Relation(Emiter.this);
+            return relation.load(actionList);
+        };
     }
 
 

@@ -76,7 +76,7 @@ public class River extends Jsonable {
                 table.type = replaceDBValue(table.type, db, tableName);
 
                 table.fixAsteriskColumns();
-                addAssociate(tableName);
+                newAssociate(tableName);
 
                 // add to associate
                 for (Map.Entry<String, River.Relation> relationEntry: table.relations.entrySet()
@@ -85,7 +85,7 @@ public class River extends Jsonable {
                     if (relationEntry.getKey() == null || relationEntry.getKey().isEmpty())
                         continue;
 
-                    String relationKey = tableName + "." + relationEntry.getKey();
+                    String relationKey = tableName + "::" + relationEntry.getKey();
                     Relation relation = relationEntry.getValue();
                     relation.fixAsteriskColumns();
 
@@ -93,16 +93,21 @@ public class River extends Jsonable {
                 }
 
                 // add with to associate
-                for (Map.Entry<String, River.SyncType> withEntry: table.with.entrySet()
+                Map<String, River.SyncType> tmp = new HashMap<>();
+                for (Map.Entry<String, River.SyncType> withEntry: table.withs.entrySet()
                 ) {
                     String relationKey = withEntry.getKey();
                     if (relationKey == null) continue;
 
-                    if (!relationKey.contains("."))
-                        relationKey = tableName + "." + relationKey;
+                    relationKey = tableName + "::" + relationKey;
 
-                    addWithToAssociate(relationKey, table, withEntry.getValue());
+                    tmp.put(relationKey, withEntry.getValue());
+
+                    setCalledToAssociate(relationKey, table, withEntry.getValue());
                 }
+
+                table.withs.clear();
+                table.withs.putAll(tmp);
 
             }
         }
@@ -120,33 +125,66 @@ public class River extends Jsonable {
             return null;
         }
 
-        protected void addAssociate(String relatedTableName)
+        protected void newAssociate(String relatedTableName)
         {
             if (!associates.containsKey(relatedTableName))
                 associates.put(relatedTableName, new ArrayList<>());
         }
 
-        protected void addAssociate(String relatedTableName, String relationKey, Table parentTable, Relation relation)
+        protected Associate addAssociate(String relatedTableName, String relationKey, Table parentTable, Relation relation)
         {
-            addAssociate(relatedTableName);
+
+            return addAssociate(relatedTableName, relationKey, parentTable, Arrays.asList(relation));
+        }
+
+        protected Associate addAssociate(String relatedTableName, String relationKey, Table parentTable, List<Relation> relationList)
+        {
+            newAssociate(relatedTableName);
 
             List<Associate> list = associates.get(relatedTableName);
 
-            Associate related = new Associate(relationKey, parentTable, relation);
+            Associate related = new Associate(relatedTableName, relationKey, parentTable, relationList);
 
             list.add(related);
+
+            return related;
         }
 
-        protected void addWithToAssociate(Associate associate, Table parentTable, SyncType syncType)
+
+        protected void setCalledToAssociate(String relationKey, Table calledTable, SyncType syncType)
         {
-            associate.addWith(parentTable, syncType);
+            List<String> withLeaves = Arrays.asList(relationKey.replaceFirst("^(.*::)", "").split("\\."));
+
+            if (withLeaves.isEmpty())
+                return;
+
+            String tableName = calledTable.tableName;
+            Associate associate = null;
+            List<Relation> relationList = new ArrayList<>();
+
+            for (String leaf : withLeaves
+                 ) {
+
+                String _relationKey = tableName + "::" + leaf;
+                associate = findAssociate(_relationKey);
+
+                if (associate == null) return;
+
+                relationList.add(associate.getLastRelation());
+
+                tableName = associate.getLastRelation().tableName;
+            }
+
+            if (findAssociate(relationKey) == null)
+                associate = addAssociate(tableName, relationKey, associate.parentTable, relationList);
+
+            associate.setCalledTable(calledTable, syncType);
+
         }
 
-        protected void addWithToAssociate(String relationKey, Table parentTable, SyncType syncType)
+        public boolean hasWith(String tableName)
         {
-            Associate associate = findAssociate(relationKey);
-            if (associate != null)
-                addWithToAssociate(associate, parentTable, syncType);
+            return tables.containsKey(tableName) && tables.get(tableName).hasWith();
         }
     }
 
@@ -157,7 +195,7 @@ public class River extends Jsonable {
         public String type = "_doc";
         public String[] id = new String[] {"id"};
         public Map<String, Relation> relations = new HashMap<>();
-        public Map<String, SyncType> with = new HashMap<>();
+        public Map<String, SyncType> withs = new HashMap<>();
 
         public Relation getRelation(String name)
         {
@@ -166,7 +204,17 @@ public class River extends Jsonable {
 
         public SyncType getWith(String name)
         {
-            return with.get(name);
+            return withs != null ? withs.get(name) : null;
+        }
+
+        public List<String> getWithNames()
+        {
+            return withs != null ? Arrays.asList(withs.keySet().toArray(new String[0])) : null;
+        }
+
+        public boolean hasWith()
+        {
+            return withs != null && !withs.isEmpty();
         }
     }
 
@@ -203,32 +251,48 @@ public class River extends Jsonable {
     }
 
     public static class Associate {
+        String tableName;
         String relationKey;
         Table parentTable;
-        Relation relation;
-        List<With> withs = new ArrayList<>();
+        Table calledTable;
+        SyncType syncType;
+        List<Relation> relationNested = new ArrayList<>();
 
-        public Associate(String relationKey, Table parentTable, Relation relation) {
+        public Associate(String tableName, String relationKey, Table parentTable, Relation relation) {
+            this.tableName = tableName;
             this.relationKey = relationKey;
             this.parentTable = parentTable;
-            this.relation = relation;
+            this.relationNested.add(relation);
         }
 
-        public void addWith(Table parentTable, SyncType syncType)
+        public Associate(String tableName, String relationKey, Table parentTable, List<Relation> relationList) {
+            this.tableName = tableName;
+            this.relationKey = relationKey;
+            this.parentTable = parentTable;
+            this.relationNested = relationList;
+        }
+
+        public Relation getLastRelation()
         {
-            withs.add(new With(relationKey, parentTable, syncType));
+            return relationNested.get(relationNested.size() - 1);
+        }
+
+        public void setCalledTable(Table calledTable, SyncType syncType)
+        {
+           this.calledTable = calledTable;
+           this.syncType = syncType;
         }
     }
 
     public static class With {
         String relationKey;
         SyncType syncType;
-        Table parentTable;
+        Table calledTable;
 
-        public With(String relationKey, Table parentTable, SyncType syncType) {
+        public With(String relationKey, Table calledTable, SyncType syncType) {
             this.relationKey = relationKey;
             this.syncType = syncType;
-            this.parentTable = parentTable;
+            this.calledTable = calledTable;
         }
     }
 }

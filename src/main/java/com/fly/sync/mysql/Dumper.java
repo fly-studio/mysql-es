@@ -12,11 +12,8 @@ import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.Config;
 import com.fly.sync.setting.River;
 import com.sun.istack.internal.NotNull;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.FlowableOnSubscribe;
+import io.reactivex.Observable;
 import io.reactivex.Scheduler;
-import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +53,7 @@ public class Dumper implements DbFactory {
         return dbFactory.getRiverDatabase();
     }
 
-    public Flowable<AbstractAction> run(Scheduler scheduler)
+    public Observable<AbstractAction> run(Scheduler scheduler)
     {
         StringBuilder cmd = new StringBuilder();
 
@@ -89,85 +86,81 @@ public class Dumper implements DbFactory {
 
         logger.info(cmd.toString().replace(river.my.password, "*"));
         Process process;
-        Flowable<List<AbstractAction>> flowable;
+
         try {
             process = Runtime.getRuntime().exec(cmd.toString());
 
         } catch (IOException e)
         {
-            return Flowable.error(new FatalDumpException(e));
+            return Observable.error(new FatalDumpException(e));
         }
 
         logger.info("Dump database [{}] from mysqldump.", database.db);
 
-        return Flowable.merge(
+        return Observable.merge(
                 errorObservable(process).subscribeOn(scheduler),
                 dataObservable(process).subscribeOn(scheduler)
             )
             .doOnError(
                     throwable -> position.reset()
-            ).doFinally(
-                    () -> process.destroy()
-            ).observeOn(Schedulers.newThread());
+            );
 
     }
 
-    private Flowable<AbstractAction> dataObservable(final Process process)
+    private Observable<AbstractAction> dataObservable(final Process process)
     {
-        return Flowable.create((FlowableOnSubscribe<AbstractAction>) flowableEmitter -> {
+        return Observable.create(observableEmitter -> {
             String sql;
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            System.out.println("data");
-
             try {
                 while(true)
                 {
-                    if (flowableEmitter.requested() == 0)
-                        continue;
-
                     sql = bufferedReader.readLine();
-                    if (sql  == null) break;
+                    if (sql == null)
+                        break;
 
                     if (sql.startsWith("CHANGE MASTER TO MASTER_LOG_FILE"))
                     {
                         parsePosition(sql);
                     } else if (sql.startsWith("INSERT INTO")){
-                        flowableEmitter.onNext(parseInsert(sql));
+
+                        InsertAction insertAction = parseInsert(sql);
+                        if (insertAction == null)
+                            logger.warn("SQL \"{}\" invalid.", sql);
+                        else
+                            observableEmitter.onNext(insertAction);
                     } else {
                         logger.info("Skip SQL {} ", sql);
                     }
                 }
 
                 if (!position.isEmpty())
-                    flowableEmitter.onNext(ChangePostionAction.create(position));
+                    observableEmitter.onNext(ChangePostionAction.create(position));
 
-                flowableEmitter.onComplete();
+                observableEmitter.onComplete();
             } catch (IOException e)
             {
-                flowableEmitter.onError(new FatalDumpException(e));
+                observableEmitter.onError(new FatalDumpException(e));
 
-                //throw new FatalDumpException(e);
             } finally {
                 try {
                     bufferedReader.close();
                 } catch (Exception e) {}
             }
-            logger.info("Dump database: \"{}\" complete;", getRiverDatabase().db);
+            logger.info("Dump database: [{}] complete;", getRiverDatabase().db);
 
-        }, BackpressureStrategy.BUFFER);
+        });
     }
 
-    private Flowable<AbstractAction> errorObservable(final Process process){
+    private Observable<AbstractAction> errorObservable(final Process process){
 
-        return Flowable.create((FlowableOnSubscribe<AbstractAction>) flowableEmitter -> {
+        return Observable.create(observableEmitter -> {
             String s;
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            System.out.println("error");
+
             try {
                 while(true)
                 {
-                    if (flowableEmitter.requested() == 0)
-                        continue;
 
                     s = bufferedReader.readLine();
                     if (s == null)
@@ -176,14 +169,14 @@ public class Dumper implements DbFactory {
                     if (s.contains("[Warning]"))
                         continue;
 
-                    flowableEmitter.onError(new FatalDumpException(s));
+                    observableEmitter.onError(new FatalDumpException(s));
                 }
 
-                flowableEmitter.onComplete();
+                observableEmitter.onComplete();
 
             } catch (IOException e)
             {
-                flowableEmitter.onError(new FatalDumpException(e));
+                observableEmitter.onError(new FatalDumpException(e));
 
             } finally {
                 try {
@@ -191,7 +184,7 @@ public class Dumper implements DbFactory {
                 } catch (Exception e) {}
             }
 
-        }, BackpressureStrategy.BUFFER);
+        });
     }
 
     private synchronized void parsePosition(String sql) {
