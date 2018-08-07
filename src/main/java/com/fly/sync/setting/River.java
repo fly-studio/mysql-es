@@ -2,6 +2,7 @@ package com.fly.sync.setting;
 
 import com.fly.core.text.json.Jsonable;
 import com.fly.sync.Main;
+import com.fly.sync.exception.ColumnNotFoundException;
 import com.squareup.moshi.Json;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,8 @@ import java.util.*;
 
 public class River extends Jsonable {
     public final static Logger logger = LoggerFactory.getLogger(Main.class);
+    private static final String NAMESPACE = "::";
+    private static final String ASTERISK = "*";
 
     public Host my;
     public Host es;
@@ -22,7 +25,7 @@ public class River extends Jsonable {
     {
         for (Database database: databases
              ) {
-            if (database.db.equals(db))
+            if (database.schemaName.equals(db))
                 return database;
         }
         return null;
@@ -35,14 +38,9 @@ public class River extends Jsonable {
 
     }
 
-    private static String replaceDBValue(String str, String db, String table)
+    public static List<String> getRelationKeyList(String relationKey)
     {
-        return str.replace("${DB}", db).replace("${TABLE}", table);
-    }
-
-    public enum SyncType {
-        always,
-        once
+        return Arrays.asList(relationKey.replaceFirst("^(.*"+NAMESPACE+")", "").split("\\."));
     }
 
     public static class Host {
@@ -53,7 +51,7 @@ public class River extends Jsonable {
     }
 
     public static class Database {
-        public String db = "";
+        @Json(name = "schema") public String schemaName = "";
         public Map<String, Table> tables = new HashMap<>();
 
         // set in init
@@ -71,12 +69,14 @@ public class River extends Jsonable {
             {
                 String tableName = entry.getKey();
                 River.Table table = entry.getValue();
+                table.schemaName = schemaName;
                 table.tableName = tableName;
-                table.index = replaceDBValue(table.index, db, tableName);
-                table.type = replaceDBValue(table.type, db, tableName);
-
+                table.fixName();
                 table.fixAsteriskColumns();
+
                 newAssociate(tableName);
+
+                table.padColumns();
 
                 // add to associate
                 for (Map.Entry<String, River.Relation> relationEntry: table.relations.entrySet()
@@ -85,30 +85,26 @@ public class River extends Jsonable {
                     if (relationEntry.getKey() == null || relationEntry.getKey().isEmpty())
                         continue;
 
-                    String relationKey = tableName + "::" + relationEntry.getKey();
+                    String relationKey = tableName + NAMESPACE + relationEntry.getKey();
                     Relation relation = relationEntry.getValue();
+
+                    relation.relationKey = relationKey;
                     relation.fixAsteriskColumns();
 
                     addAssociate(relationEntry.getValue().tableName, relationKey, table, relation);
+
+                    relation.padColumns();
                 }
 
-                // add with to associate
-                Map<String, River.SyncType> tmp = new HashMap<>();
-                for (Map.Entry<String, River.SyncType> withEntry: table.withs.entrySet()
-                ) {
-                    String relationKey = withEntry.getKey();
+                // add with to associate;
+                for (int i = 0; i < table.withs.size(); ++i) {
+                    String relationKey = table.withs.get(i);
                     if (relationKey == null) continue;
 
-                    relationKey = tableName + "::" + relationKey;
+                    relationKey = tableName + NAMESPACE + relationKey;
 
-                    tmp.put(relationKey, withEntry.getValue());
-
-                    setCalledToAssociate(relationKey, table, withEntry.getValue());
+                    setCalledToAssociate(relationKey, table);
                 }
-
-                table.withs.clear();
-                table.withs.putAll(tmp);
-
             }
         }
 
@@ -125,35 +121,34 @@ public class River extends Jsonable {
             return null;
         }
 
-        protected void newAssociate(String relatedTableName)
+        void newAssociate(String relatedTableName)
         {
             if (!associates.containsKey(relatedTableName))
                 associates.put(relatedTableName, new ArrayList<>());
         }
 
-        protected Associate addAssociate(String relatedTableName, String relationKey, Table parentTable, Relation relation)
+        Associate addAssociate(String relatedTableName, String relationKey, Table parentTable, Relation relation)
         {
 
             return addAssociate(relatedTableName, relationKey, parentTable, Arrays.asList(relation));
         }
 
-        protected Associate addAssociate(String relatedTableName, String relationKey, Table parentTable, List<Relation> relationList)
+        Associate addAssociate(String relatedTableName, String relationKey, Table parentTable, List<Relation> relationList)
         {
             newAssociate(relatedTableName);
 
             List<Associate> list = associates.get(relatedTableName);
 
-            Associate related = new Associate(relatedTableName, relationKey, parentTable, relationList);
+            Associate related = new Associate(schemaName, relatedTableName, relationKey, parentTable, relationList);
 
             list.add(related);
 
             return related;
         }
 
-
-        protected void setCalledToAssociate(String relationKey, Table calledTable, SyncType syncType)
+        void setCalledToAssociate(String relationKey, Table calledTable)
         {
-            List<String> withLeaves = Arrays.asList(relationKey.replaceFirst("^(.*::)", "").split("\\."));
+            List<String> withLeaves = getRelationKeyList(relationKey);
 
             if (withLeaves.isEmpty())
                 return;
@@ -165,7 +160,7 @@ public class River extends Jsonable {
             for (String leaf : withLeaves
                  ) {
 
-                String _relationKey = tableName + "::" + leaf;
+                String _relationKey = tableName + NAMESPACE + leaf;
                 associate = findAssociate(_relationKey);
 
                 if (associate == null) return;
@@ -178,7 +173,7 @@ public class River extends Jsonable {
             if (findAssociate(relationKey) == null)
                 associate = addAssociate(tableName, relationKey, associate.parentTable, relationList);
 
-            associate.setCalledTable(calledTable, syncType);
+            associate.setCalledTable(calledTable);
 
         }
 
@@ -193,106 +188,177 @@ public class River extends Jsonable {
         public String index;
         public String template = "";
         public String type = "_doc";
-        public String[] id = new String[] {"id"};
+        public List<String> id = Arrays.asList("id");
         public Map<String, Relation> relations = new HashMap<>();
-        public Map<String, SyncType> withs = new HashMap<>();
+        public List<String> withs = new ArrayList<>();
 
         public Relation getRelation(String name)
         {
             return relations.get(name);
         }
 
-        public SyncType getWith(String name)
-        {
-            return withs != null ? withs.get(name) : null;
-        }
-
-        public List<String> getWithNames()
-        {
-            return withs != null ? Arrays.asList(withs.keySet().toArray(new String[0])) : null;
-        }
-
         public boolean hasWith()
         {
             return withs != null && !withs.isEmpty();
         }
+
+        void fixName()
+        {
+            index = index.replace("${SCHEMA}", schemaName).replace("${TABLE}", tableName);
+            type = type.replace("${SCHEMA}", schemaName).replace("${TABLE}", tableName);
+        }
+
+        public List<String> getFullWiths()
+        {
+            List<String> withNames = new ArrayList<>();
+            for (String with: withs
+                 ) {
+                withNames.add(tableName + NAMESPACE + with);
+            }
+            return withNames;
+        }
+
+        void padColumns()
+        {
+            for (String _id: id)
+                addColumn(_id);
+
+            for (Map.Entry<String, Relation> relationEntry: relations.entrySet())
+                addColumn(relationEntry.getValue().local);
+        }
+
+        public void setFullColumns(List<String> fullColumns) throws ColumnNotFoundException
+        {
+            super.setFullColumns(fullColumns);
+
+            for (Map.Entry<String, Relation> entry: relations.entrySet()
+                 ) {
+                String local = entry.getValue().local;
+                if (!fullColumns.contains(local))
+                    throw new ColumnNotFoundException("Local column ["+ local +"] is not found in Relation [" + entry.getValue().relationKey +"] of Database ["+ schemaName +"]");
+            }
+        }
     }
 
     public static class Relation extends TableBase {
+        public String relationKey;
         public String foreign;
         public String local;
-    }
 
-    private static class TableBase {
-        @Json(name = "table") public String tableName;
-        public List<String> columns = Arrays.asList("*");
-        @Json(name = "column_alias") public Map<String, String> columnAlias = new HashMap<>();
-
-        public void fixColumns(List<String> allColumns)
+        void padColumns()
         {
-            if (!columns.contains("*")) {
-                if (columns.retainAll(allColumns))
-                    logger.warn("Table {} columns reset to {}.", tableName, columns);
-            }
-
-            columnAlias.entrySet().removeIf(entry -> !allColumns.contains(entry.getKey()));
+            addColumn(foreign);
         }
 
-        public void fixAsteriskColumns()
+        public void setFullColumns(List<String> fullColumns) throws ColumnNotFoundException
         {
-            if (columns.isEmpty() || (columns.contains("*") && columns.size() != 1)) {
-                columns = Arrays.asList("*");
+            super.setFullColumns(fullColumns);
+
+            if (!fullColumns.contains(foreign))
+                throw new ColumnNotFoundException("Foreign column ["+ foreign +"] is not found in Relation ["+ relationKey +"] of Database ["+ schemaName +"]");
+        }
+    }
+
+    public static class TableBase {
+        public String schemaName;
+        @Json(name = "table") public String tableName;
+        public List<String> columns = Arrays.asList(ASTERISK);
+        public List<String> fullColumns;
+        @Json(name = "column_alias") public Map<String, String> columnAlias = new HashMap<>();
+
+        public void setFullColumns(List<String> fullColumns) throws ColumnNotFoundException
+        {
+            this.fullColumns = fullColumns;
+
+            if (!columns.contains(ASTERISK)) {
+                if (columns.retainAll(fullColumns))
+                    logger.warn("Table {} columns reset to [{}].", tableName, columns);
+            }
+
+            columnAlias.entrySet().removeIf(entry -> !fullColumns.contains(entry.getKey()));
+        }
+        
+        public List<String> getColumns()
+        {
+            return columns.contains(ASTERISK) ? fullColumns : columns;
+        }
+
+        void addColumn(String column)
+        {
+            if (columns.contains(ASTERISK))
+                return;
+
+            if (!columns.contains(column))
+                columns.add(column);
+        }
+
+        void fixAsteriskColumns()
+        {
+            if (columns.isEmpty() || (columns.contains(ASTERISK) && columns.size() != 1)) {
+                columns = Arrays.asList(ASTERISK);
                 logger.warn("Table {} columns reset to [\"*\"].", tableName);
             }
+
             if (columnAlias.size() > 0)
-                columnAlias.entrySet().removeIf(entry -> entry.getKey().equals("*") || entry.getKey().equals(entry.getValue()));
+                columnAlias.entrySet().removeIf(entry -> entry.getKey().equals(ASTERISK) || entry.getKey().equals(entry.getValue()));
+        }
+
+        public String toSql()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.append("SELECT ")
+                .append(String.join(", ", columns))
+                .append(" FROM `")
+                .append(schemaName)
+                .append("`.`")
+                .append(tableName)
+                .append("` ");
+
+            return sb.toString();
+        }
+
+        public String toSql(String whereInColumn)
+        {
+            return toSql() + " WHERE `" + whereInColumn +"` IN (<Values>)";
         }
 
     }
 
     public static class Associate {
-        String tableName;
-        String relationKey;
-        Table parentTable;
-        Table calledTable;
-        SyncType syncType;
-        List<Relation> relationNested = new ArrayList<>();
+        public String schemaName;
+        public String tableName;
+        public String relationKey;
+        public List<String> columns;
+        public Table parentTable;
+        public Table calledTable;
+        public List<Relation> nestedRelations;
 
-        public Associate(String tableName, String relationKey, Table parentTable, Relation relation) {
+        public Associate(String schemaName, String tableName, String relationKey, Table parentTable, List<Relation> relationList) {
+            this.schemaName = schemaName;
             this.tableName = tableName;
             this.relationKey = relationKey;
             this.parentTable = parentTable;
-            this.relationNested.add(relation);
+            this.nestedRelations = relationList;
         }
 
-        public Associate(String tableName, String relationKey, Table parentTable, List<Relation> relationList) {
-            this.tableName = tableName;
-            this.relationKey = relationKey;
-            this.parentTable = parentTable;
-            this.relationNested = relationList;
+        public List<String> getRelationKeyList()
+        {
+            return River.getRelationKeyList(relationKey);
         }
 
         public Relation getLastRelation()
         {
-            return relationNested.get(relationNested.size() - 1);
+            return nestedRelations.get(nestedRelations.size() - 1);
         }
 
-        public void setCalledTable(Table calledTable, SyncType syncType)
+        public Relation getFirstRelation()
+        {
+            return nestedRelations.get(0);
+        }
+
+        public void setCalledTable(Table calledTable)
         {
            this.calledTable = calledTable;
-           this.syncType = syncType;
-        }
-    }
-
-    public static class With {
-        String relationKey;
-        SyncType syncType;
-        Table calledTable;
-
-        public With(String relationKey, Table calledTable, SyncType syncType) {
-            this.relationKey = relationKey;
-            this.syncType = syncType;
-            this.calledTable = calledTable;
         }
     }
 }

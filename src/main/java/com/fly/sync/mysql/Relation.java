@@ -1,94 +1,184 @@
 package com.fly.sync.mysql;
 
-import com.fly.sync.action.InsertAction;
 import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.DbFactory;
+import com.fly.sync.executor.Emiter;
+import com.fly.sync.mysql.model.Record;
+import com.fly.sync.mysql.model.Records;
 import com.fly.sync.setting.River;
+import io.reactivex.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Relation {
 
     private DbFactory dbFactory;
-    private Map<String, List<AbstractAction>> tableActions = new HashMap<>();
+    private Records recordList;
+    private Map<String, RelationRecords> tableRecords = new HashMap<>();
 
-    public Relation(DbFactory dbFactory) {
+    public Relation(DbFactory dbFactory, Records actionList) {
 
         this.dbFactory = dbFactory;
+        this.recordList = actionList;
+
+        filterToTableActions();
     }
 
-    private void putAction(String tableName, AbstractAction action)
+    public Relation(Emiter dbFactory, List<AbstractAction> actionList) {
+        this.dbFactory = dbFactory;
+        this.recordList = new Records();
+
+        for (AbstractAction action: actionList
+             ) {
+            if (action instanceof Record)
+                recordList.add((Record)action);
+        }
+
+        filterToTableActions();
+    }
+
+    private River.Database getRiverDatabase()
     {
-        List<AbstractAction> actionList;
-        if (tableActions.containsKey(tableName))
+        return dbFactory.getRiverDatabase();
+    }
+
+    private void filterToTableActions()
+    {
+        tableRecords.clear();
+
+        for (Record record :recordList
+        ) {
+            if (getRiverDatabase().hasWith(record.table))
+                putToTableAction(record.table, record);
+        }
+    }
+
+    private void putToTableAction(String tableName, Record action)
+    {
+        RelationRecords records;
+        if (tableRecords.containsKey(tableName))
         {
-            actionList = tableActions.get(tableName);
+            records = tableRecords.get(tableName);
         } else {
-            actionList = new ArrayList<>();
-            tableActions.put(tableName, actionList);
+            records = new RelationRecords(dbFactory, tableName);
+            tableRecords.put(tableName, records);
         }
 
-        actionList.add(action);
+        records.addAction(action);
     }
 
-    private River.Table getRiverTable(String tableName)
+    public void load()
     {
-        return dbFactory.getRiverDatabase().getTable(tableName);
-    }
-
-    private String getLocalKeys(River.Table table, String withName)
-    {
-        return null;
-    }
-
-    public List<AbstractAction> load(List<AbstractAction> actionList)
-    {
-        tableActions.clear();
-
-        for (AbstractAction action :actionList
+        // for each tables
+        for (Map.Entry<String, RelationRecords> entry: tableRecords.entrySet()
         ) {
-            if (action instanceof InsertAction)
-            {
-                InsertAction a = (InsertAction)action;
-                if (getRiverTable(a.table).hasWith())
-                    putAction(a.table, action);
-            }
-        }
-
-        for (Map.Entry<String, List<AbstractAction>> entry: tableActions.entrySet()
-        ) {
-            River.Table table = getRiverTable(entry.getKey());
-            List<String> withNames = table.getWithNames();
+            List<String> withNames = entry.getValue().table.getFullWiths();
 
             for (String withName: withNames
                  ) {
-                River.Associate associate = dbFactory.getRiverDatabase().findAssociate(withName);
-
+                River.Associate associate = getRiverDatabase().findAssociate(withName);
+                if (associate != null)
+                    entry.getValue().with(associate);
             }
+        }
+    }
 
-            //getLocalKeys(table)
+    public class RelationRecords {
+        River.Table table;
+        Records records = new Records();
+        List<String> loadedRelationKeys = new ArrayList<>();
+        private DbFactory dbFactory;
+
+        RelationRecords(DbFactory dbFactory, String tableName) {
+            this.dbFactory = dbFactory;
+            this.table = getRiverTable(tableName);
         }
 
-        return actionList;
-    }
+        void addAction(Record action)
+        {
+            records.add(action);
+        }
 
-    public void fillRelation(List<AbstractAction> actionList)
-    {
-        /*Map<String, River.SyncType> withs = table.withs;
-        if (withs.size() == 0)
-            return;
-        for (String relationKey:withs.keySet()
-             ) {
+        River.Table getRiverTable(String tableName)
+        {
+            return dbFactory.getRiverDatabase().getTable(tableName);
+        }
 
-            getRelationData(actionList, relationKey);
-        }*/
-    }
+        void with(River.Associate associate)
+        {
+            if (loadedRelationKeys.contains(associate.relationKey))
+                return;
 
-    private void getRelationData(List<AbstractAction> actionList, String relationKey)
-    {
+            List<String> relationKeys = associate.getRelationKeyList();
+            List<String> localValues;
+            Records localRecords;
+            River.Relation relation;
+            String localPrefixKey, relationPrefixKey;
+
+            for(int i = 0; i < associate.nestedRelations.size(); ++i)
+            {
+                localPrefixKey = String.join(".", relationKeys.subList(0, i));
+                relationPrefixKey = String.join(".", relationKeys.subList(0, i + 1));
+
+                relation = associate.nestedRelations.get(i);
+
+                localValues = getLocalValues(records, relation, localPrefixKey);
+                localRecords = getRelationRecords(localValues, relation);
+
+                fillRecords(records, relation, localRecords, localPrefixKey, relationPrefixKey);
+
+                loadedRelationKeys.add(relationPrefixKey);
+            }
+
+        }
+
+        private void fillRecords(List<Record> originalRecords, River.Relation relation, Records relationRecords, String localPrefixKey, String relationPrefixKey)
+        {
+            Record nullRecord = Record.create(relation.tableName, relation.getColumns());
+            String localColumn = localPrefixKey.isEmpty() ? relation.local : localPrefixKey + "." + relation.local;
+
+            for (Record record: originalRecords
+                 ) {
+                Object val = record.get(localColumn);
+
+                if (val == null) {
+                    record.with(relationPrefixKey, nullRecord);
+                } else {
+
+                    Record relationRecord = relationRecords.find(relation.foreign, val);
+
+                    record.with(relationPrefixKey, relationRecord == null ? nullRecord : relationRecord);
+                }
+            }
+        }
+
+        @Nullable
+        private Records getRelationRecords(List<String> localValues, River.Relation relation)
+        {
+            if (localValues == null || localValues.isEmpty())
+                return null;
+
+            return dbFactory.getMySql().query(relation, relation.foreign, localValues);
+        }
+
+        @Nullable
+        private List<String> getLocalValues(List<Record> originalRecords, River.Relation relation, String localPrefixKey)
+        {
+            Set<String> localValues = new HashSet<>();
+
+            String localColumn = localPrefixKey.isEmpty() ? relation.local : localPrefixKey + "." + relation.local;
+
+            for (Record record: originalRecords
+                 ) {
+                Object object = record.get(localColumn);
+                if (object == null)
+                    continue;
+
+                localValues.add(object.toString());
+            }
+
+            return localValues.isEmpty() ? null : Arrays.asList(localValues.toArray(new String[0]));
+        }
 
     }
 

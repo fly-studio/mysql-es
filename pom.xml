@@ -71,6 +71,11 @@
             <version>2.2.0</version>
         </dependency>
         <dependency>
+            <groupId>com.github.akarnokd</groupId>
+            <artifactId>rxjava2-extensions</artifactId>
+            <version>0.20.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client</artifactId>
             <version>6.3.2</version>

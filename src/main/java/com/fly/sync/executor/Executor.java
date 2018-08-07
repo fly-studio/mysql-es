@@ -97,7 +97,7 @@ public class Executor {
             logger.error(e.getMessage(), e);
             if (e instanceof FatalException || e instanceof MissingBackpressureException)
             {
-                running.set(false);
+                stop();
             }
         }
     }

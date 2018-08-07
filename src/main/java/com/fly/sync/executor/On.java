@@ -70,9 +70,9 @@ public class On implements DatabaseListener {
         River.Database database = getDatabase();
 
         if (position == null)
-            Setting.binLog.remove(database.db);
+            Setting.binLog.remove(database.schemaName);
         else
-            Setting.binLog.set(database.db, position);
+            Setting.binLog.set(database.schemaName, position);
 
         try {
             Setting.saveBinLog();

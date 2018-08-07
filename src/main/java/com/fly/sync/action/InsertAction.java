@@ -1,42 +1,20 @@
 package com.fly.sync.action;
 
 import com.fly.sync.contract.AbstractAction;
+import com.fly.sync.mysql.model.Record;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class InsertAction implements AbstractAction {
+public class InsertAction extends Record implements AbstractAction {
 
-    public String table;
-    public Map<String, Object> value;
-
-    public InsertAction(String table, Map<String, Object> value) {
-        this.table = table;
-        this.value = value;
+    public InsertAction(String table, Map<String, Object> items) {
+        super(table, items);
     }
 
-    public static InsertAction create(String table, List<String> columns, List<Object> valueList) {
-        if (columns.size() != valueList.size())
-            throw new ArrayIndexOutOfBoundsException("columns's size MUST equal to valueList's size.");
 
-        Map<String, Object> value = new HashMap<>();
-        for (int i = 0; i < columns.size(); i++) {
-            value.put(columns.get(i), valueList.get(i));
-        }
-        return new InsertAction(table, value);
-    }
-
-    public Object find(String key)
+    public static InsertAction create(Record record)
     {
-        return value.get(key);
+        return new InsertAction(record.table, record.items);
     }
 
-    public void with(String relationKey, Map<String, Object> kv)
-    {
-        for (Map.Entry<String, Object> entry : kv.entrySet()
-             ) {
-            value.put(relationKey + "." + entry.getKey(), entry.getValue());
-        }
-    }
 }

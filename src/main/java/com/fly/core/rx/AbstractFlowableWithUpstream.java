@@ -9,8 +9,8 @@ import org.reactivestreams.Publisher;
  * Abstract base class for operators that take an upstream
  * source {@link Publisher}.
  *
- * @param <T> the upstream value type
- * @param <R> the output value type
+ * @param <T> the upstream items type
+ * @param <R> the output items type
  */
 abstract class AbstractFlowableWithUpstream<T, R> extends Flowable<R> implements HasUpstreamPublisher<T> {
 

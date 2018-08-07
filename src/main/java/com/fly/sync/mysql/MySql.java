@@ -1,11 +1,10 @@
 package com.fly.sync.mysql;
 
 import com.fly.sync.contract.AbstractConnector;
+import com.fly.sync.exception.ColumnNotFoundException;
 import com.fly.sync.exception.DisconnectionException;
 import com.fly.sync.exception.RecordNotFoundException;
-import com.fly.sync.mysql.model.ColumnDao;
-import com.fly.sync.mysql.model.DatabaseDao;
-import com.fly.sync.mysql.model.TableDao;
+import com.fly.sync.mysql.model.*;
 import com.fly.sync.setting.River;
 import com.mysql.cj.jdbc.Driver;
 import org.jdbi.v3.core.Jdbi;
@@ -14,6 +13,7 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MySql  {
 
@@ -71,28 +71,49 @@ public class MySql  {
         return list;
     }
 
-    public void validate() throws RecordNotFoundException
+    public Records query(River.TableBase table, String whereInColumn, List<String> values)
+    {
+        return getClient().withHandle(handle -> {
+
+            String sql = table.toSql(whereInColumn);
+            Records records = new Records();
+
+            List<Map<String, Object>> list = handle.createQuery(sql)
+                    .bindList("Values", values)
+                    .mapToMap()
+                    .list()
+                    .stream()
+                    .filter(v -> v != null)
+                    .collect(Collectors.toList());
+
+            list.forEach(kv -> records.add(Record.create(table.tableName, kv)));
+
+            return records;
+        });
+    }
+
+    public void validate() throws RecordNotFoundException, ColumnNotFoundException
     {
         for (River.Database database:
              river.databases) {
-            if (!exists(database.db))
-                throw new RecordNotFoundException("Database \"" + database.db+ "\" not exists");
+            if (!exists(database.schemaName))
+                throw new RecordNotFoundException("Database \"" + database.schemaName + "\" is not exists");
 
-            for (String table: database.associates.keySet()
+            for (String tableName: database.associates.keySet()
                  ) {
-                if (!exists(database.db, table))
-                    throw new RecordNotFoundException("Table \"" + database.db + "." + table + "\" not exists");
+                if (!exists(database.schemaName, tableName))
+                    throw new RecordNotFoundException("Table \"" + database.schemaName + "." + tableName + "\" is not exists");
             }
 
             for (Map.Entry<String, River.Table> tableEntry: database.tables.entrySet()
                  ) {
                 River.Table table = tableEntry.getValue();
-                table.fixColumns(columns(database.db, table.tableName));
+                table.setFullColumns(columns(database.schemaName, table.tableName));
 
                 for (Map.Entry<String, River.Relation> relationEntry: tableEntry.getValue().relations.entrySet()
                      ) {
                     River.Relation relation = relationEntry.getValue();
-                    relation.fixColumns(columns(database.db, relation.tableName));
+                    relation.setFullColumns(columns(database.schemaName, relation.tableName));
                 }
             }
         }

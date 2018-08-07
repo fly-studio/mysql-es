@@ -12,4 +12,5 @@ public class ChangePostionAction extends BinLog.Position implements AbstractActi
     public static ChangePostionAction create(BinLog.Position position) {
         return new ChangePostionAction(position.name, position.position);
     }
+
 }

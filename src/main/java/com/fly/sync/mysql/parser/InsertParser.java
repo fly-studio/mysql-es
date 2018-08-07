@@ -32,7 +32,7 @@ public class InsertParser {
         String str = matcher.group(2);
 
         int len = str.length();
-        List<Object> list = new ArrayList<>();
+        List<String> valueList = new ArrayList<>();
 
         int j = 0;
         boolean escaped = false;
@@ -44,7 +44,7 @@ public class InsertParser {
                 j = i + 1;
                 for (; j < len && str.charAt(j) != ','; j++);
 
-                list.add(str.substring(i, j));
+                valueList.add(str.substring(i, j));
 
                 i = j + 1;
             } else { // read string until another single quote
@@ -70,13 +70,13 @@ public class InsertParser {
                 if (j >= len)
                     return null;
 
-                String value = str.substring(i + 1, j);
+                String value = str.substring(i, j + 1);
 
                 if (escaped) {
                     value = StringEscapeUtils.unescapeJava(value);
                 }
 
-                list.add(value);
+                valueList.add(value);
 
                 // skip ' and ,
                 i = j + 2;
@@ -84,6 +84,19 @@ public class InsertParser {
 
             // skip blank
         }
+
+        List<Object> list = new ArrayList<>();
+
+        for (String value : valueList
+             ) {
+            if (value.equalsIgnoreCase("NULL"))
+                list.add(null);
+            else if (value.length() > 1 && value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'')
+                list.add(value.substring(1, value.length() - 1));
+            else
+                list.add(value);
+        }
+
         return list;
     }
 

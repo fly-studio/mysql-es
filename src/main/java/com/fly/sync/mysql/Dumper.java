@@ -6,6 +6,7 @@ import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
 import com.fly.sync.exception.FatalDumpException;
+import com.fly.sync.mysql.model.Record;
 import com.fly.sync.mysql.parser.InsertParser;
 import com.fly.sync.mysql.parser.PositionParser;
 import com.fly.sync.setting.BinLog;
@@ -21,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Map;
 
 public class Dumper implements DbFactory {
 
@@ -61,7 +63,7 @@ public class Dumper implements DbFactory {
          * /usr/bin/mysqldump --host=XXXX --port=3306 --user=root --password=x xxxxxxxxxxxx \
          * --master-data --single-transaction --skip-lock-tables --compact --skip-opt \
          * --quick --no-create-info --skip-extended-insert --set-gtid-purged=OFF --default-character-set=utf8 \
-         * db table1 table2 table3 table4
+         * schemaName table1 table2 table3 table4
          */
         River.Database database = getRiverDatabase();
         cmd.append(config.mysqldump)
@@ -76,12 +78,15 @@ public class Dumper implements DbFactory {
             .append(" --default-character-set=")
             .append(river.charset)
             .append(" --master-data --single-transaction --skip-lock-tables --compact --skip-opt --quick --no-create-info --skip-extended-insert --set-gtid-purged=OFF ")
-            .append(database.db);
+            .append(database.schemaName);
 
-        for (String name: database.tables.keySet()
+        for (Map.Entry<String, River.Table> tableEntry: database.tables.entrySet()
              ) {
+            if (!tableEntry.getValue().sync)
+                continue;
+
             cmd.append(" ");
-            cmd.append(name);
+            cmd.append(tableEntry.getKey());
         }
 
         logger.info(cmd.toString().replace(river.my.password, "*"));
@@ -95,14 +100,17 @@ public class Dumper implements DbFactory {
             return Observable.error(new FatalDumpException(e));
         }
 
-        logger.info("Dump database [{}] from mysqldump.", database.db);
+        logger.info("Dump database [{}] from mysqldump.", database.schemaName);
 
         return Observable.merge(
                 errorObservable(process).subscribeOn(scheduler),
                 dataObservable(process).subscribeOn(scheduler)
             )
             .doOnError(
-                    throwable -> position.reset()
+                    throwable -> {
+                        position.reset();
+                        process.destroy();
+                    }
             );
 
     }
@@ -147,7 +155,7 @@ public class Dumper implements DbFactory {
                     bufferedReader.close();
                 } catch (Exception e) {}
             }
-            logger.info("Dump database: [{}] complete;", getRiverDatabase().db);
+            logger.info("Dump database: [{}] complete;", getRiverDatabase().schemaName);
 
         });
     }
@@ -161,7 +169,6 @@ public class Dumper implements DbFactory {
             try {
                 while(true)
                 {
-
                     s = bufferedReader.readLine();
                     if (s == null)
                         break;
@@ -195,11 +202,11 @@ public class Dumper implements DbFactory {
 
     private InsertAction parseInsert(String sql)
     {
-        String table = InsertParser.parseTable(sql);
-        if (table != null && !table.isEmpty())
+        String tableName = InsertParser.parseTable(sql);
+        if (tableName != null && !tableName.isEmpty())
         {
             List<Object> value = InsertParser.parseValue(sql);
-            return value == null ? null : InsertAction.create(table, getMySql().columns(getRiverDatabase().db, table), value);
+            return value == null ? null :  InsertAction.create(Record.create(tableName, getMySql().columns(getRiverDatabase().schemaName, tableName), value));
         }
 
         return null;

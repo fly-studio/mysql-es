@@ -8,6 +8,7 @@ import com.fly.sync.exception.FatalEsException;
 import com.fly.sync.mysql.Dumper;
 import com.fly.sync.mysql.MySql;
 import com.fly.sync.mysql.Relation;
+import com.fly.sync.mysql.model.Record;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
 import io.reactivex.Observable;
@@ -15,6 +16,8 @@ import io.reactivex.Scheduler;
 import io.reactivex.functions.Function;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -55,6 +58,7 @@ public class Emiter implements DbFactory {
                 runCanal(scheduler)
             )
             .buffer(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize)
+            .concatMap(new SplitRecordActions())
             .map(new WithRelations())
             ;
     }
@@ -72,21 +76,45 @@ public class Emiter implements DbFactory {
     private void createIndices()
     {
         try {
-            this.getEs().createIndices(database, Setting.binLog.isEmpty(database.db));
+            this.getEs().createIndices(database, Setting.binLog.isEmpty(database.schemaName));
         } catch (IOException e) {
-            throw new FatalEsException("Create Indices of DB: \"" + database.db + "\" Failed.", e);
+            throw new FatalEsException("Create Indices of DB: \"" + database.schemaName + "\" Failed.", e);
         }
     }
 
     private Observable<AbstractAction> runDumper(Scheduler scheduler)
     {
-        if (!Setting.binLog.isEmpty(database.db))
+        if (!Setting.binLog.isEmpty(database.schemaName))
             return Observable.empty();
 
         Dumper dumper = new Dumper(Setting.config, Setting.river, this);
 
         return dumper.run(scheduler);
+    }
 
+    public class SplitRecordActions implements Function<List<AbstractAction>, Observable<List<AbstractAction>>>
+    {
+        @Override
+        public Observable<List<AbstractAction>> apply(List<AbstractAction> actionList) throws Exception {
+            List<List<AbstractAction>> lists = new ArrayList<>();
+            List<AbstractAction> actions = new ArrayList<>();
+            for (AbstractAction action : actionList
+            ) {
+                if (!(action instanceof Record))
+                {
+                    // set ChangePostionAction/Other into a singe
+                    if (!actions.isEmpty()) lists.add(actions);
+                    lists.add(Arrays.asList(action));
+
+                    actions = new ArrayList<>();
+                    continue;
+                }
+                actions.add(action);
+            }
+            // last
+            if (!actions.isEmpty()) lists.add(actions);
+            return Observable.fromIterable(lists);
+        }
     }
 
     public class WithRelations implements Function<List<AbstractAction>, List<AbstractAction>> {
@@ -94,9 +122,14 @@ public class Emiter implements DbFactory {
         @Override
         public List<AbstractAction> apply(List<AbstractAction> actionList) throws Exception {
 
-            Relation relation = new Relation(Emiter.this);
-            return relation.load(actionList);
-        };
+            if (actionList.size() == 1 && !(actionList.get(0) instanceof Record))
+                return actionList;
+
+            Relation relation = new Relation(Emiter.this, actionList);
+            relation.load();
+
+            return actionList;
+        }
     }
 
 
