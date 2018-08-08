@@ -62,13 +62,7 @@ public class Executor {
     {
         if (running.get())
             throw new RejectedExecutionException("Application is running.");
-mySql.getClient().withHandle(handle -> {
-    Query query = handle.select("SELECT * FROM `youxia-gs`.`chats` LIMIT 10")
-            ;
-    ;
-    System.out.println(query.mapToMap().findFirst());
-    return null;
-});
+
         running.set(true);
 
         Scheduler scheduler = Schedulers.from(threadPool);

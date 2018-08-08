@@ -1,0 +1,105 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "title_standard": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "asciifolding",
+            "f_ngram",
+            "unique"
+          ]
+        },
+        "title_search_standard": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "asciifolding",
+            "unique"
+          ]
+        }
+      },
+      "filter": {
+        "f_ngram": {
+          "type": "edgeNGram",
+          "min_gram": 2,
+          "max_gram": 25,
+          "side": "front"
+        },
+        "f_word_delimiter": {
+          "type": "word_delimiter",
+          "split_on_numerics": true,
+          "split_on_case_change": true,
+          "generate_word_parts": true,
+          "generate_number_parts": true,
+          "catenate_words": true,
+          "catenate_numbers": true,
+          "catenate_all": true,
+          "preserve_original": true
+        }
+      }
+    }
+  },
+  "mappings": {
+    "_doc": {
+      "dynamic_templates": [
+        {
+          "keywords": {
+            "match_pattern": "regex",
+            "match_mapping_type": "string",
+            "match": "^.*?_type$",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        },
+        {
+          "whole_words": {
+            "match_pattern": "regex",
+            "match_mapping_type": "string",
+            "match": "^(name|username|account)$",
+            "mapping": {
+              "type": "text",
+              "search_analyzer": "title_search_standard",
+              "analyzer": "title_standard"
+            }
+          }
+        },
+        {
+          "phones": {
+            "match_mapping_type": "string",
+            "match": "*phone",
+            "mapping": {
+              "type": "text",
+              "search_analyzer": "title_search_standard",
+              "analyzer": "title_standard"
+            }
+          }
+        },
+        {
+          "dates": {
+            "match_mapping_type": "string",
+            "match": "*_at",
+            "mapping": {
+              "type": "date",
+              "format": "yyy-MM-dd HH:mm:ss||yyy-MM-dd HH:mm:ss.SSS||date||HH:mm:ss||date_time||date_time_no_millis||date_hour_minute_second||date_hour_minute_second_millis"
+            }
+          }
+        },
+        {
+          "timestamp": {
+            "match_mapping_type": "long",
+            "match": "*_at",
+            "mapping": {
+              "type": "date",
+              "format": "seconds-since-the-epoch||milliseconds-since-the-epoch"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
