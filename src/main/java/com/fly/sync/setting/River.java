@@ -1,23 +1,28 @@
 package com.fly.sync.setting;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fly.core.text.json.Jsonable;
 import com.fly.sync.Main;
 import com.fly.sync.exception.ColumnNotFoundException;
-import com.squareup.moshi.Json;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class River extends Jsonable {
+    @JsonIgnore
     public final static Logger logger = LoggerFactory.getLogger(Main.class);
+    @JsonIgnore
     private static final String NAMESPACE = "::";
+    @JsonIgnore
     private static final String ASTERISK = "*";
 
     public Host my;
     public Host es;
     public String charset = "utf8";
-    @Json(name = "server_id") public int serverId = 9999;
+    @JsonProperty("server_id")
+    public int serverId = 9999;
 
     public List<Database> databases;
 
@@ -51,11 +56,12 @@ public class River extends Jsonable {
     }
 
     public static class Database {
-        @Json(name = "schema") public String schemaName = "";
+        @JsonProperty("schema") public String schemaName = "";
         public Map<String, Table> tables = new HashMap<>();
 
         // set in init
         // table => [...{relationKey, relation, parentTable, with}];
+        @JsonIgnore
         public Map<String, List<Associate>> associates = new HashMap<>();
 
         public Table getTable(String name)
@@ -88,6 +94,7 @@ public class River extends Jsonable {
                     String relationKey = tableName + NAMESPACE + relationEntry.getKey();
                     Relation relation = relationEntry.getValue();
 
+                    relation.schemaName = schemaName;
                     relation.relationKey = relationKey;
                     relation.fixAsteriskColumns();
 
@@ -231,16 +238,21 @@ public class River extends Jsonable {
         {
             super.setFullColumns(fullColumns);
 
+            for(String key: id)
+                if (!fullColumns.contains(key))
+                    throw new ColumnNotFoundException("ID column ["+ key +"] not found in Table [" + tableName +"] of Database ["+ schemaName +"]");
+
             for (Map.Entry<String, Relation> entry: relations.entrySet()
                  ) {
                 String local = entry.getValue().local;
                 if (!fullColumns.contains(local))
-                    throw new ColumnNotFoundException("Local column ["+ local +"] is not found in Relation [" + entry.getValue().relationKey +"] of Database ["+ schemaName +"]");
+                    throw new ColumnNotFoundException("Local column ["+ local +"] not found in Relation [" + entry.getValue().relationKey +"] of Database ["+ schemaName +"]");
             }
         }
     }
 
     public static class Relation extends TableBase {
+        @JsonIgnore
         public String relationKey;
         public String foreign;
         public String local;
@@ -255,16 +267,20 @@ public class River extends Jsonable {
             super.setFullColumns(fullColumns);
 
             if (!fullColumns.contains(foreign))
-                throw new ColumnNotFoundException("Foreign column ["+ foreign +"] is not found in Relation ["+ relationKey +"] of Database ["+ schemaName +"]");
+                throw new ColumnNotFoundException("Foreign column ["+ foreign +"] not found in Relation ["+ relationKey +"] of Database ["+ schemaName +"]");
         }
     }
 
     public static class TableBase {
+        @JsonIgnore
         public String schemaName;
-        @Json(name = "table") public String tableName;
+        @JsonProperty("table")
+        public String tableName;
         public List<String> columns = Arrays.asList(ASTERISK);
+        @JsonIgnore
         public List<String> fullColumns;
-        @Json(name = "column_alias") public Map<String, String> columnAlias = new HashMap<>();
+        @JsonProperty("column_alias")
+        public Map<String, String> columnAlias = new HashMap<>();
 
         public void setFullColumns(List<String> fullColumns) throws ColumnNotFoundException
         {
@@ -277,7 +293,8 @@ public class River extends Jsonable {
 
             columnAlias.entrySet().removeIf(entry -> !fullColumns.contains(entry.getKey()));
         }
-        
+
+        @JsonIgnore
         public List<String> getColumns()
         {
             return columns.contains(ASTERISK) ? fullColumns : columns;

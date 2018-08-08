@@ -46,6 +46,8 @@
           "type": "_doc",
           // What ES template do this index use, default: ""
           "template" : "",
+          // SimpleDateFormat
+          "date_format": "yyyy-MM-dd'T'HH:mm:ss.SSSZZ",
           // What Primary key, default: ["id"]
           "id" : ["id"],
           // What columns you wanna sync to this index, default: ["*"]

@@ -16,6 +16,6 @@ public class FileAdapter extends JsonAdapter<File> {
 
     @FromJson
     public synchronized void toJson(JsonWriter writer, File file) throws IOException {
-        writer.value(file == null ? "" : file.getAbsolutePath());
+        writer.value(file == null ? null : file.getAbsolutePath());
     }
 }

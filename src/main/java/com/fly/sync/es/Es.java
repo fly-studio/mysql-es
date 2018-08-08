@@ -1,6 +1,6 @@
 package com.fly.sync.es;
 
-import com.fly.core.io.IoUtils;
+import com.fly.core.io.IOUtils;
 import com.fly.sync.contract.AbstractConnector;
 import com.fly.sync.exception.OutOfRetryException;
 import com.fly.sync.setting.River;
@@ -33,7 +33,6 @@ public class Es {
     public Es(River river, boolean autoReconnect) {
         this.river = river;
         this.connector = new Connector(river, autoReconnect);
-
     }
 
     public boolean connect() throws Exception
@@ -55,9 +54,7 @@ public class Es {
     public RestHighLevelClient getClient() throws OutOfRetryException
     {
         if(!connector.isConnected())
-        {
             waitForConnected(10, 5000);
-        }
 
         return connector.getClient();
     }
@@ -91,7 +88,7 @@ public class Es {
         //With Mapping
         if (table.template != null && !table.template.isEmpty())
         {
-           String json = IoUtils.readJson(Setting.getEtcPath(new File(table.template)));
+           String json = IOUtils.readJson(Setting.getEtcPath(new File(table.template)));
            createIndexRequest.source(json, XContentType.JSON);
         }
 

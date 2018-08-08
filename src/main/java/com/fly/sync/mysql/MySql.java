@@ -6,10 +6,21 @@ import com.fly.sync.exception.DisconnectionException;
 import com.fly.sync.exception.RecordNotFoundException;
 import com.fly.sync.mysql.model.*;
 import com.fly.sync.setting.River;
+import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.Driver;
+import com.mysql.cj.jdbc.StatementImpl;
+import com.mysql.cj.jdbc.result.ResultSetFactory;
+import com.mysql.cj.jdbc.result.ResultSetImpl;
+import com.mysql.cj.protocol.ColumnDefinition;
+import com.mysql.cj.protocol.Resultset;
+import com.mysql.cj.protocol.a.result.ByteArrayRow;
+import com.mysql.cj.protocol.a.result.ResultsetRowsStatic;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +31,7 @@ public class MySql  {
     public Connector connector;
     private River river;
     private Map<String, List<String>> columnsCache = new HashMap<>();
+    private Map<String, Resultset> blankResultsets = new HashMap<>();
 
     public MySql(River river, boolean autoReconnect) {
         this.river = river;
@@ -42,6 +54,11 @@ public class MySql  {
         return connector.getClient();
     }
 
+    public ConnectionImpl getConnection()
+    {
+        return connector.getConnection();
+    }
+
     public boolean exists(String db)
     {
         return getClient().withExtension(DatabaseDao.class, dao -> dao.find(db) != null);
@@ -57,10 +74,10 @@ public class MySql  {
         return columns(db, table, false);
     }
 
-    public List<String> columns(String db, String table, boolean force)
+    public List<String> columns(String db, String table, boolean flush)
     {
         String key = db + "." + table;
-        if (!force)
+        if (!flush)
         {
             if (columnsCache.containsKey(key))
                 return columnsCache.get(key);
@@ -69,6 +86,76 @@ public class MySql  {
         List<String> list = getClient().withExtension(ColumnDao.class, dao -> dao.allNames(db, table));
         columnsCache.put(key, list);
         return list;
+    }
+
+    public Resultset getBlankResultset(String db, String table) throws SQLException
+    {
+        return getBlankResultset(db, table, false);
+    }
+
+    public Resultset getBlankResultset(String db, String table, boolean flush) throws SQLException
+    {
+        String key = "`" + db + "`.`" + table + "`";
+        if (!flush)
+        {
+            if (blankResultsets.containsKey(key))
+                return blankResultsets.get(key);
+        }
+        Resultset rs = (Resultset)getConnection().createStatement().executeQuery("SELECT * FROM "+ key + " LIMIT 1");
+
+        blankResultsets.put(key, rs);
+        return rs;
+    }
+
+    public Record mixResultset(String db, String table, List<String> data) throws SQLException
+    {
+        Resultset rs = getBlankResultset(db, table);
+        ColumnDefinition columnDefinition = rs.getColumnDefinition();
+
+        if (columnDefinition.getFields().length != data.size())
+            return null;
+
+        if (rs instanceof ResultSetImpl)
+        {
+            ResultSetImpl resultSet = (ResultSetImpl) rs;
+            ResultsetRowsStatic rsRow = (ResultsetRowsStatic)resultSet.getRows();
+
+            byte[][] rowBytes = new byte[columnDefinition.getFields().length][];
+
+            for (int i = 0; i < columnDefinition.getFields().length; i++)
+                rowBytes[i] = data.get(i) == null ? null : data.get(i).getBytes();
+
+            ResultsetRowsStatic newRsRow = new ResultsetRowsStatic(Arrays.asList(new ByteArrayRow(rowBytes, null)), rsRow.getMetadata());
+            ResultSetImpl resultSetImp = new ResultSetFactory(getConnection(), (StatementImpl) resultSet.getStatement())
+                    .createFromResultsetRows(resultSet.getConcurrency(), resultSet.getType(), newRsRow);
+
+            if (resultSetImp.next())
+            {
+                ResultSetMetaData m = resultSetImp.getMetaData();
+                int columnCount = m.getColumnCount();
+                String[] columnNames = new String[columnCount + 1];
+
+                for(int i = 1; i <= columnCount; ++i) {
+                    String key = m.getColumnName(i);
+                    String alias = m.getColumnLabel(i);
+                    if (alias == null) {
+                        alias = key;
+                    }
+
+                    columnNames[i] = alias;
+                }
+
+                Map<String, Object> row = new HashMap<>();
+                for(int i = 1; i <= columnCount; ++i) {
+                    row.put(columnNames[i], resultSetImp.getObject(i));
+                }
+                return Record.create(table, row);
+            }
+
+            return null;
+        }
+
+        return null;
     }
 
     public Records query(River.TableBase table, String whereInColumn, List<String> values)
@@ -122,7 +209,7 @@ public class MySql  {
     public class Connector extends AbstractConnector
     {
         private Jdbi jdbi;
-
+        private ConnectionImpl connection;
         public Connector(River river, boolean autoReconnect) {
             super(river, autoReconnect);
         }
@@ -147,7 +234,7 @@ public class MySql  {
             new Driver();
             jdbi = Jdbi.create(sb.toString(), river.my.user, river.my.password);
             jdbi.installPlugin(new SqlObjectPlugin());
-            //connection = jdbi.open();
+            connection = (ConnectionImpl)jdbi.open().getConnection();
         }
 
         @Override
@@ -169,13 +256,16 @@ public class MySql  {
 
         @Override
         protected void doClose() throws Exception {
-
-
+            connection.close();
         }
 
 
         public Jdbi getClient() {
             return jdbi;
+        }
+
+        public ConnectionImpl getConnection() {
+            return connection;
         }
     }
 }

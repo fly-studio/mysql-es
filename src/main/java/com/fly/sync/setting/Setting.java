@@ -1,18 +1,14 @@
 package com.fly.sync.setting;
 
-import com.fly.core.io.IoUtils;
 import com.fly.core.text.json.Jsonable;
 import com.fly.sync.exception.ConfigException;
 import com.sun.istack.internal.NotNull;
-import okio.BufferedSink;
-import okio.Okio;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 
 public class Setting {
 
@@ -64,7 +60,7 @@ public class Setting {
         Config config;
 
         try {
-            config = Jsonable.fromJson(Config.class, IoUtils.readJson(file));
+            config = Jsonable.fromJson(Config.class, file);
         } catch (Exception e) {
             throw new ConfigException("\"" + CONFIG_FILE + "\" JSON format ERROR.", e);
         }
@@ -133,9 +129,9 @@ public class Setting {
         River river;
         try {
 
-            river = Jsonable.fromJson(River.class, IoUtils.readJson(file));
+            river = Jsonable.fromJson(River.class, file);
             river.init();
-        } catch (IOException e)
+        } catch (Exception e)
         {
             throw new ConfigException("\"" + RIVER_FILE + "\" JSON format ERROR.", e);
         }
@@ -157,7 +153,7 @@ public class Setting {
 
         BinLog log;
         try {
-             log = Jsonable.fromJson(BinLog.class, IoUtils.readJson(file));
+             log = Jsonable.fromJson(BinLog.class, file);
         } catch (Exception e) {
             log = new BinLog();
         }
@@ -166,7 +162,7 @@ public class Setting {
         return log;
     }
 
-    public static void saveBinLog() throws IOException
+    public static void saveBinLog() throws Exception
     {
         synchronized (BinLog.class)
         {
@@ -175,9 +171,7 @@ public class Setting {
             if (!file.exists())
                 file.createNewFile();
 
-            BufferedSink sink = Okio.buffer(Okio.sink(file));
-            binLog.toJson(sink);
-            sink.close();
+            binLog.toJson(file);
         }
 
     }

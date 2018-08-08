@@ -7,7 +7,7 @@ import okio.Okio;
 import java.io.File;
 import java.io.IOException;
 
-public class IoUtils {
+public class IOUtils {
 
     public static String readUtf8(File file) throws IOException
     {

@@ -57,9 +57,11 @@ public class Emiter implements DbFactory {
                 runDumper(scheduler),
                 runCanal(scheduler)
             )
+            .takeWhile(value -> executor.isRunning())
             .buffer(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize)
             .concatMap(new SplitRecordActions())
             .map(new WithRelations())
+            .map(new AliasColumns())
             ;
     }
 
@@ -75,6 +77,9 @@ public class Emiter implements DbFactory {
 
     private void createIndices()
     {
+        if (!Setting.binLog.isEmpty(database.schemaName))
+            return;
+
         try {
             this.getEs().createIndices(database, Setting.binLog.isEmpty(database.schemaName));
         } catch (IOException e) {
@@ -84,8 +89,8 @@ public class Emiter implements DbFactory {
 
     private Observable<AbstractAction> runDumper(Scheduler scheduler)
     {
-        if (!Setting.binLog.isEmpty(database.schemaName))
-            return Observable.empty();
+        //if (!Setting.binLog.isEmpty(database.schemaName))
+         //   return Observable.empty();
 
         Dumper dumper = new Dumper(Setting.config, Setting.river, this);
 
@@ -102,7 +107,7 @@ public class Emiter implements DbFactory {
             ) {
                 if (!(action instanceof Record))
                 {
-                    // set ChangePostionAction/Other into a singe
+                    // set ChangePositionAction/Other into a singe
                     if (!actions.isEmpty()) lists.add(actions);
                     lists.add(Arrays.asList(action));
 
@@ -128,6 +133,15 @@ public class Emiter implements DbFactory {
             Relation relation = new Relation(Emiter.this, actionList);
             relation.load();
 
+            return actionList;
+        }
+    }
+
+    public class AliasColumns implements Function<List<AbstractAction>, List<AbstractAction>> {
+
+        @Override
+        public List<AbstractAction> apply(List<AbstractAction> actionList) throws Exception {
+            //Todo
             return actionList;
         }
     }

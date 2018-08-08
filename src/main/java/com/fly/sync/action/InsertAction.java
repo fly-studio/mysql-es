@@ -1,6 +1,7 @@
 package com.fly.sync.action;
 
 import com.fly.sync.contract.AbstractAction;
+import com.fly.sync.contract.DbFactory;
 import com.fly.sync.mysql.model.Record;
 
 import java.util.Map;
@@ -17,4 +18,8 @@ public class InsertAction extends Record implements AbstractAction {
         return new InsertAction(record.table, record.items);
     }
 
+    @Override
+    public void execute(DbFactory dbFactory) {
+
+    }
 }

@@ -1,12 +1,15 @@
 package com.fly.sync.mysql.model;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fly.sync.setting.River;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 public class Record {
 
@@ -18,7 +21,7 @@ public class Record {
         this.items = items;
     }
 
-    public static Record create(String table, List<String> columns, List<Object> itemList) {
+    public static <T extends Object> Record create(String table, List<String> columns, List<T> itemList) {
 
         if (columns.size() != itemList.size())
             throw new ArrayIndexOutOfBoundsException("columns's size MUST equal to valueList's size.");
@@ -30,12 +33,12 @@ public class Record {
         return new Record(table, kv);
     }
 
-    public static Record create(String table, Map<String, Object> kv)
+     public static Record create(String table, Map<String, Object> kv)
     {
         return new Record(table, kv);
     }
 
-    public static Record create(String table, List<String> columns)
+    public static Record createNull(String table, List<String> columns)
     {
         Map<String, Object> value = new HashMap<>();
         for (int i = 0; i < columns.size(); i++)
@@ -44,7 +47,7 @@ public class Record {
         return new Record(table, value);
     }
 
-    public boolean equals(@NotNull String key, @Nullable Object val)
+    public boolean equals(@NotNull String key, @Nullable Object val, boolean strict)
     {
         if (items.containsKey(key))
         {
@@ -53,10 +56,15 @@ public class Record {
             if (val == null)
                 return obj == null;
 
-            return val.equals(obj);
+            return strict ? val.equals(obj) : val.toString().equalsIgnoreCase(obj.toString());
         }
 
         return false;
+    }
+
+    public boolean equals(@NotNull String key, @Nullable Object val)
+    {
+        return equals(key, val, false);
     }
 
     public Object get(@NotNull String key)
@@ -73,6 +81,19 @@ public class Record {
     {
         items.put(key, val);
         return this;
+    }
+
+    public String getID(River.Table table)
+    {
+        if (table.id.size() == 1)
+            return items.get(table.id.get(0)).toString();
+
+        StringJoiner sj = new StringJoiner(":");
+        for (String key: table.id
+             ) {
+            sj.add(items.get(key).toString());
+        }
+        return sj.toString();
     }
 
     public void with(@NotNull String relationKey, @NotNull Map<String, Object> kv)
@@ -94,5 +115,10 @@ public class Record {
     public Record setTable(String tableName) {
         table = tableName;
         return this;
+    }
+
+    public String toJson(ObjectMapper objectMapper) throws Exception
+    {
+        return objectMapper.writeValueAsString(items);
     }
 }

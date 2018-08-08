@@ -21,7 +21,7 @@ public class InsertParser {
         return null;
     }
 
-    public static List<Object> parseValue(String sql)
+    public static List<String> parseValue(String sql)
     {
         Pattern pattern = Pattern.compile(INSERT_PATTERN, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         Matcher matcher = pattern.matcher(sql);
@@ -85,7 +85,7 @@ public class InsertParser {
             // skip blank
         }
 
-        List<Object> list = new ArrayList<>();
+        List<String> list = new ArrayList<>();
 
         for (String value : valueList
              ) {

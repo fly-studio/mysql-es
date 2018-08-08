@@ -1,6 +1,6 @@
 package com.fly.sync.mysql;
 
-import com.fly.sync.action.ChangePostionAction;
+import com.fly.sync.action.ChangePositionAction;
 import com.fly.sync.action.InsertAction;
 import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.DbFactory;
@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -143,7 +144,7 @@ public class Dumper implements DbFactory {
                 }
 
                 if (!position.isEmpty())
-                    observableEmitter.onNext(ChangePostionAction.create(position));
+                    observableEmitter.onNext(ChangePositionAction.create(position));
 
                 observableEmitter.onComplete();
             } catch (IOException e)
@@ -205,8 +206,22 @@ public class Dumper implements DbFactory {
         String tableName = InsertParser.parseTable(sql);
         if (tableName != null && !tableName.isEmpty())
         {
-            List<Object> value = InsertParser.parseValue(sql);
-            return value == null ? null :  InsertAction.create(Record.create(tableName, getMySql().columns(getRiverDatabase().schemaName, tableName), value));
+
+            List<String> value = InsertParser.parseValue(sql);
+
+            if (value == null)
+                return null;
+
+            try {
+                Record record = getMySql().mixResultset(getRiverDatabase().schemaName, tableName, value);
+                if (record != null)
+                    return InsertAction.create(record);
+            } catch (SQLException e)
+            {
+
+            }
+
+            return  InsertAction.create(Record.create(tableName, getMySql().columns(getRiverDatabase().schemaName, tableName), value));
         }
 
         return null;

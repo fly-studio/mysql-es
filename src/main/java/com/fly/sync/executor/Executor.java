@@ -8,8 +8,8 @@ import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.reactivex.Scheduler;
-import io.reactivex.exceptions.MissingBackpressureException;
 import io.reactivex.schedulers.Schedulers;
+import org.jdbi.v3.core.statement.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,22 +62,25 @@ public class Executor {
     {
         if (running.get())
             throw new RejectedExecutionException("Application is running.");
-
+mySql.getClient().withHandle(handle -> {
+    Query query = handle.select("SELECT * FROM `youxia-gs`.`chats` LIMIT 10")
+            ;
+    ;
+    System.out.println(query.mapToMap().findFirst());
+    return null;
+});
         running.set(true);
 
         Scheduler scheduler = Schedulers.from(threadPool);
 
         for (River.Database database: Setting.river.databases
                      ) {
-
             new Emiter(this, database)
                 .buildObservable(scheduler)
                 //.compose(FlowableBufferTimed.build(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize > 120 ? 120 : Setting.config.bulkSize))
                 .subscribeOn(scheduler)
                 .observeOn(scheduler)
-                .takeWhile(value -> isRunning())
                 .subscribe(new Consumer(this, database));
-
         }
     }
 
@@ -89,13 +92,12 @@ public class Executor {
         }
     }
 
-
     public void throwException(Throwable e)
     {
         synchronized (Executor.class)
         {
             logger.error(e.getMessage(), e);
-            if (e instanceof FatalException || e instanceof MissingBackpressureException)
+            if (e instanceof FatalException)
             {
                 stop();
             }

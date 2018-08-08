@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class BinLog extends Jsonable {
-    public Map<String, Position> lists = new HashMap<String, Position>();
+    public Map<String, Position> lists = new HashMap<>();
 
     public boolean isEmpty(String db)
     {
@@ -49,7 +49,7 @@ public class BinLog extends Jsonable {
 
         public boolean isEmpty()
         {
-            return name.isEmpty();
+            return name == null || name.isEmpty();
         }
 
         public void reset()

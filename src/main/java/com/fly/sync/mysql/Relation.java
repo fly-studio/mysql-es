@@ -2,7 +2,6 @@ package com.fly.sync.mysql;
 
 import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.DbFactory;
-import com.fly.sync.executor.Emiter;
 import com.fly.sync.mysql.model.Record;
 import com.fly.sync.mysql.model.Records;
 import com.fly.sync.setting.River;
@@ -24,15 +23,10 @@ public class Relation {
         filterToTableActions();
     }
 
-    public Relation(Emiter dbFactory, List<AbstractAction> actionList) {
-        this.dbFactory = dbFactory;
-        this.recordList = new Records();
+    public Relation(DbFactory dbFactory, List<AbstractAction> actionList) {
 
-        for (AbstractAction action: actionList
-             ) {
-            if (action instanceof Record)
-                recordList.add((Record)action);
-        }
+        this.dbFactory = dbFactory;
+        this.recordList = Records.create(actionList);
 
         filterToTableActions();
     }
@@ -134,7 +128,7 @@ public class Relation {
 
         private void fillRecords(List<Record> originalRecords, River.Relation relation, Records relationRecords, String localPrefixKey, String relationPrefixKey)
         {
-            Record nullRecord = Record.create(relation.tableName, relation.getColumns());
+            Record nullRecord = Record.createNull(relation.tableName, relation.getColumns());
             String localColumn = localPrefixKey.isEmpty() ? relation.local : localPrefixKey + "." + relation.local;
 
             for (Record record: originalRecords
