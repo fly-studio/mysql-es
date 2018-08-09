@@ -2,6 +2,7 @@ package com.fly.sync.mysql.model;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fly.sync.contract.AbstractRecord;
 import com.fly.sync.setting.River;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
-public class Record {
+public class Record implements AbstractRecord {
 
     public String table;
     public Map<String, Object> items;
@@ -24,7 +25,7 @@ public class Record {
     public static <T extends Object> Record create(String table, List<String> columns, List<T> itemList) {
 
         if (columns.size() != itemList.size())
-            throw new ArrayIndexOutOfBoundsException("columns's size MUST equal to valueList's size.");
+            throw new ArrayIndexOutOfBoundsException("columnNames's size MUST equal to valueList's size.");
 
         Map<String, Object> kv = new HashMap<>();
         for (int i = 0; i < columns.size(); i++)
@@ -85,11 +86,11 @@ public class Record {
 
     public String getID(River.Table table)
     {
-        if (table.id.size() == 1)
-            return items.get(table.id.get(0)).toString();
+        if (table.pk.size() == 1)
+            return items.get(table.pk.get(0)).toString();
 
         StringJoiner sj = new StringJoiner(":");
-        for (String key: table.id
+        for (String key: table.pk
              ) {
             sj.add(items.get(key).toString());
         }
@@ -114,6 +115,11 @@ public class Record {
 
     public Record setTable(String tableName) {
         table = tableName;
+        return this;
+    }
+
+    @Override
+    public Record getRecord() {
         return this;
     }
 

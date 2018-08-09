@@ -78,7 +78,7 @@ public class River extends Jsonable {
                 table.schemaName = schemaName;
                 table.tableName = tableName;
                 table.fixName();
-                table.fixAsteriskColumns();
+                table.fixColumns();
 
                 newAssociate(tableName);
 
@@ -96,7 +96,7 @@ public class River extends Jsonable {
 
                     relation.schemaName = schemaName;
                     relation.relationKey = relationKey;
-                    relation.fixAsteriskColumns();
+                    relation.fixColumns();
 
                     addAssociate(relationEntry.getValue().tableName, relationKey, table, relation);
 
@@ -195,7 +195,7 @@ public class River extends Jsonable {
         public String index;
         public String template = "";
         public String type = "_doc";
-        public List<String> id = Arrays.asList("id");
+        public List<String> pk = Arrays.asList("id");
         public Map<String, Relation> relations = new HashMap<>();
         public List<String> withs = new ArrayList<>();
 
@@ -227,20 +227,24 @@ public class River extends Jsonable {
 
         void padColumns()
         {
-            for (String _id: id)
+            for (String _id: pk)
                 addColumn(_id);
 
             for (Map.Entry<String, Relation> relationEntry: relations.entrySet())
                 addColumn(relationEntry.getValue().local);
         }
 
-        public void setFullColumns(List<String> fullColumns) throws ColumnNotFoundException
+        @Override
+        public void validateColumns(List<String> fullColumns) throws ColumnNotFoundException
         {
-            super.setFullColumns(fullColumns);
+            super.validateColumns(fullColumns);
 
-            for(String key: id)
+            if (pk == null || pk.isEmpty())
+                throw new ColumnNotFoundException("Empty Primary key, in Table [" + tableName +"] of Database ["+ schemaName +"]");
+
+            for(String key: pk)
                 if (!fullColumns.contains(key))
-                    throw new ColumnNotFoundException("ID column ["+ key +"] not found in Table [" + tableName +"] of Database ["+ schemaName +"]");
+                    throw new ColumnNotFoundException("Primary key column ["+ key +"] not found in Table [" + tableName +"] of Database ["+ schemaName +"]");
 
             for (Map.Entry<String, Relation> entry: relations.entrySet()
                  ) {
@@ -262,9 +266,9 @@ public class River extends Jsonable {
             addColumn(foreign);
         }
 
-        public void setFullColumns(List<String> fullColumns) throws ColumnNotFoundException
+        public void validateColumns(List<String> fullColumns) throws ColumnNotFoundException
         {
-            super.setFullColumns(fullColumns);
+            super.validateColumns(fullColumns);
 
             if (!fullColumns.contains(foreign))
                 throw new ColumnNotFoundException("Foreign column ["+ foreign +"] not found in Relation ["+ relationKey +"] of Database ["+ schemaName +"]");
@@ -282,13 +286,13 @@ public class River extends Jsonable {
         @JsonProperty("column_alias")
         public Map<String, String> columnAlias = new HashMap<>();
 
-        public void setFullColumns(List<String> fullColumns) throws ColumnNotFoundException
+        public void validateColumns(List<String> fullColumns) throws ColumnNotFoundException
         {
             this.fullColumns = fullColumns;
 
             if (!columns.contains(ASTERISK)) {
                 if (columns.retainAll(fullColumns))
-                    logger.warn("Table {} columns reset to [{}].", tableName, columns);
+                    logger.warn("Table {} columnNames reset to [{}].", tableName, columns);
             }
 
             columnAlias.entrySet().removeIf(entry -> !fullColumns.contains(entry.getKey()));
@@ -309,11 +313,11 @@ public class River extends Jsonable {
                 columns.add(column);
         }
 
-        void fixAsteriskColumns()
+        void fixColumns()
         {
             if (columns.isEmpty() || (columns.contains(ASTERISK) && columns.size() != 1)) {
                 columns = Arrays.asList(ASTERISK);
-                logger.warn("Table {} columns reset to [\"*\"].", tableName);
+                logger.warn("Table {} columnNames reset to [\"*\"].", tableName);
             }
 
             if (columnAlias.size() > 0)

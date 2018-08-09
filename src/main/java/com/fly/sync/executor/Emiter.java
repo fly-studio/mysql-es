@@ -1,14 +1,15 @@
 package com.fly.sync.executor;
 
 import com.fly.sync.action.NullAction;
+import com.fly.sync.action.ReportAction;
 import com.fly.sync.contract.AbstractAction;
+import com.fly.sync.contract.AbstractRecord;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
 import com.fly.sync.exception.FatalEsException;
 import com.fly.sync.mysql.Dumper;
 import com.fly.sync.mysql.MySql;
 import com.fly.sync.mysql.Relation;
-import com.fly.sync.mysql.model.Record;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
 import io.reactivex.Observable;
@@ -31,18 +32,26 @@ public class Emiter implements DbFactory {
         this.database = database;
     }
 
+    @Override
     public Es getEs()
     {
         return executor.getEs();
     }
 
+    @Override
     public MySql getMySql()
     {
         return executor.getMySql();
     }
 
+    @Override
     public River.Database getRiverDatabase() {
         return database;
+    }
+
+    @Override
+    public Statistic getStatistic() {
+        return executor.getStatistic();
     }
 
     public Executor getExecutor() {
@@ -53,15 +62,33 @@ public class Emiter implements DbFactory {
 
         createIndices();
 
-        return Observable.concat(
-                runDumper(scheduler),
-                runCanal(scheduler)
+        return Observable.merge(
+                    Observable.concat(
+                        runDumper(scheduler),
+                        runCanal(scheduler)
+                    ),
+                Observable.interval(15, TimeUnit.SECONDS)
+                        .subscribeOn(scheduler)
+                        .observeOn(scheduler)
+                        .map(v -> new ReportAction())
             )
             .takeWhile(value -> executor.isRunning())
-            .buffer(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize)
-            .concatMap(new SplitRecordActions())
-            .map(new WithRelations())
-            .map(new AliasColumns())
+
+                .observeOn(scheduler)
+                .subscribeOn(scheduler)
+                .buffer(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize)
+
+                .observeOn(scheduler)
+                .subscribeOn(scheduler)
+                .concatMap(new SplitRecordActions())
+
+                .observeOn(scheduler)
+                .subscribeOn(scheduler)
+                .map(new WithRelations())
+
+                .observeOn(scheduler)
+                .subscribeOn(scheduler)
+                .map(new AliasColumns())
             ;
     }
 
@@ -89,8 +116,8 @@ public class Emiter implements DbFactory {
 
     private Observable<AbstractAction> runDumper(Scheduler scheduler)
     {
-        //if (!Setting.binLog.isEmpty(database.schemaName))
-         //   return Observable.empty();
+        if (!Setting.binLog.isEmpty(database.schemaName))
+            return Observable.empty();
 
         Dumper dumper = new Dumper(Setting.config, Setting.river, this);
 
@@ -101,23 +128,29 @@ public class Emiter implements DbFactory {
     {
         @Override
         public Observable<List<AbstractAction>> apply(List<AbstractAction> actionList) throws Exception {
+
             List<List<AbstractAction>> lists = new ArrayList<>();
             List<AbstractAction> actions = new ArrayList<>();
+
             for (AbstractAction action : actionList
             ) {
-                if (!(action instanceof Record))
+                if (!(action instanceof AbstractRecord))
                 {
                     // set ChangePositionAction/Other into a singe
                     if (!actions.isEmpty()) lists.add(actions);
+
                     lists.add(Arrays.asList(action));
 
                     actions = new ArrayList<>();
                     continue;
                 }
+
                 actions.add(action);
             }
+
             // last
             if (!actions.isEmpty()) lists.add(actions);
+
             return Observable.fromIterable(lists);
         }
     }
@@ -127,7 +160,7 @@ public class Emiter implements DbFactory {
         @Override
         public List<AbstractAction> apply(List<AbstractAction> actionList) throws Exception {
 
-            if (actionList.size() == 1 && !(actionList.get(0) instanceof Record))
+            if (actionList.size() == 1 && !(actionList.get(0) instanceof AbstractRecord))
                 return actionList;
 
             Relation relation = new Relation(Emiter.this, actionList);

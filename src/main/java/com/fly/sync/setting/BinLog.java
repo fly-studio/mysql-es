@@ -1,5 +1,6 @@
 package com.fly.sync.setting;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fly.core.text.json.Jsonable;
 
 import java.util.HashMap;
@@ -47,6 +48,7 @@ public class BinLog extends Jsonable {
             this.position = position;
         }
 
+        @JsonIgnore
         public boolean isEmpty()
         {
             return name == null || name.isEmpty();

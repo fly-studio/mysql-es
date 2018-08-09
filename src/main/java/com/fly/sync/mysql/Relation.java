@@ -1,9 +1,9 @@
 package com.fly.sync.mysql;
 
+import com.fly.sync.action.RecordsAction;
 import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.mysql.model.Record;
-import com.fly.sync.mysql.model.Records;
 import com.fly.sync.setting.River;
 import io.reactivex.annotations.Nullable;
 
@@ -12,10 +12,10 @@ import java.util.*;
 public class Relation {
 
     private DbFactory dbFactory;
-    private Records recordList;
+    private RecordsAction recordList;
     private Map<String, RelationRecords> tableRecords = new HashMap<>();
 
-    public Relation(DbFactory dbFactory, Records actionList) {
+    public Relation(DbFactory dbFactory, RecordsAction actionList) {
 
         this.dbFactory = dbFactory;
         this.recordList = actionList;
@@ -26,7 +26,7 @@ public class Relation {
     public Relation(DbFactory dbFactory, List<AbstractAction> actionList) {
 
         this.dbFactory = dbFactory;
-        this.recordList = Records.create(actionList);
+        this.recordList = RecordsAction.create(actionList);
 
         filterToTableActions();
     }
@@ -79,7 +79,7 @@ public class Relation {
 
     public class RelationRecords {
         River.Table table;
-        Records records = new Records();
+        RecordsAction recordsAction = new RecordsAction();
         List<String> loadedRelationKeys = new ArrayList<>();
         private DbFactory dbFactory;
 
@@ -90,7 +90,7 @@ public class Relation {
 
         void addAction(Record action)
         {
-            records.add(action);
+            recordsAction.add(action);
         }
 
         River.Table getRiverTable(String tableName)
@@ -105,7 +105,7 @@ public class Relation {
 
             List<String> relationKeys = associate.getRelationKeyList();
             List<String> localValues;
-            Records localRecords;
+            RecordsAction localRecordsAction;
             River.Relation relation;
             String localPrefixKey, relationPrefixKey;
 
@@ -116,17 +116,17 @@ public class Relation {
 
                 relation = associate.nestedRelations.get(i);
 
-                localValues = getLocalValues(records, relation, localPrefixKey);
-                localRecords = getRelationRecords(localValues, relation);
+                localValues = getLocalValues(recordsAction, relation, localPrefixKey);
+                localRecordsAction = getRelationRecords(localValues, relation);
 
-                fillRecords(records, relation, localRecords, localPrefixKey, relationPrefixKey);
+                fillRecords(recordsAction, relation, localRecordsAction, localPrefixKey, relationPrefixKey);
 
                 loadedRelationKeys.add(relationPrefixKey);
             }
 
         }
 
-        private void fillRecords(List<Record> originalRecords, River.Relation relation, Records relationRecords, String localPrefixKey, String relationPrefixKey)
+        private void fillRecords(List<Record> originalRecords, River.Relation relation, RecordsAction relationRecordsAction, String localPrefixKey, String relationPrefixKey)
         {
             Record nullRecord = Record.createNull(relation.tableName, relation.getColumns());
             String localColumn = localPrefixKey.isEmpty() ? relation.local : localPrefixKey + "." + relation.local;
@@ -139,7 +139,7 @@ public class Relation {
                     record.with(relationPrefixKey, nullRecord);
                 } else {
 
-                    Record relationRecord = relationRecords.find(relation.foreign, val);
+                    Record relationRecord = relationRecordsAction.find(relation.foreign, val);
 
                     record.with(relationPrefixKey, relationRecord == null ? nullRecord : relationRecord);
                 }
@@ -147,12 +147,12 @@ public class Relation {
         }
 
         @Nullable
-        private Records getRelationRecords(List<String> localValues, River.Relation relation)
+        private RecordsAction getRelationRecords(List<String> localValues, River.Relation relation)
         {
             if (localValues == null || localValues.isEmpty())
                 return null;
 
-            return dbFactory.getMySql().query(relation, relation.foreign, localValues);
+            return dbFactory.getMySql().queryIn(relation, relation.foreign, localValues);
         }
 
         @Nullable

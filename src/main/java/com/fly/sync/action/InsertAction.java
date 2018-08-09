@@ -1,25 +1,30 @@
 package com.fly.sync.action;
 
 import com.fly.sync.contract.AbstractAction;
+import com.fly.sync.contract.AbstractRecord;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.mysql.model.Record;
 
-import java.util.Map;
+public class InsertAction implements AbstractAction, AbstractRecord {
 
-public class InsertAction extends Record implements AbstractAction {
+    private Record record;
 
-    public InsertAction(String table, Map<String, Object> items) {
-        super(table, items);
+    public InsertAction(Record record) {
+        this.record = record;
     }
-
 
     public static InsertAction create(Record record)
     {
-        return new InsertAction(record.table, record.items);
+        return new InsertAction(record);
     }
 
     @Override
     public void execute(DbFactory dbFactory) {
 
+
+    }
+
+    public Record getRecord() {
+        return record;
     }
 }

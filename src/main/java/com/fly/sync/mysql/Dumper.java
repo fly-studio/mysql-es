@@ -2,10 +2,12 @@ package com.fly.sync.mysql;
 
 import com.fly.sync.action.ChangePositionAction;
 import com.fly.sync.action.InsertAction;
+import com.fly.sync.action.RecordsAction;
 import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
 import com.fly.sync.exception.FatalDumpException;
+import com.fly.sync.executor.Statistic;
 import com.fly.sync.mysql.model.Record;
 import com.fly.sync.mysql.parser.InsertParser;
 import com.fly.sync.mysql.parser.PositionParser;
@@ -14,6 +16,8 @@ import com.fly.sync.setting.Config;
 import com.fly.sync.setting.River;
 import com.sun.istack.internal.NotNull;
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +58,11 @@ public class Dumper implements DbFactory {
     @Override
     public River.Database getRiverDatabase() {
         return dbFactory.getRiverDatabase();
+    }
+
+    @Override
+    public Statistic getStatistic() {
+        return dbFactory.getStatistic();
     }
 
     public Observable<AbstractAction> run(Scheduler scheduler)
@@ -116,52 +125,12 @@ public class Dumper implements DbFactory {
 
     }
 
-    private Observable<AbstractAction> dataObservable(final Process process)
+    private Observable<AbstractAction> dataObservable(Process process)
     {
-        return Observable.create(observableEmitter -> {
-            String sql;
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            try {
-                while(true)
-                {
-                    sql = bufferedReader.readLine();
-                    if (sql == null)
-                        break;
-
-                    if (sql.startsWith("CHANGE MASTER TO MASTER_LOG_FILE"))
-                    {
-                        parsePosition(sql);
-                    } else if (sql.startsWith("INSERT INTO")){
-
-                        InsertAction insertAction = parseInsert(sql);
-                        if (insertAction == null)
-                            logger.warn("SQL \"{}\" invalid.", sql);
-                        else
-                            observableEmitter.onNext(insertAction);
-                    } else {
-                        logger.info("Skip SQL {} ", sql);
-                    }
-                }
-
-                if (!position.isEmpty())
-                    observableEmitter.onNext(ChangePositionAction.create(position));
-
-                observableEmitter.onComplete();
-            } catch (IOException e)
-            {
-                observableEmitter.onError(new FatalDumpException(e));
-
-            } finally {
-                try {
-                    bufferedReader.close();
-                } catch (Exception e) {}
-            }
-            logger.info("Dump database: [{}] complete;", getRiverDatabase().schemaName);
-
-        });
+        return Observable.create(new DataEmitter(process));
     }
 
-    private Observable<AbstractAction> errorObservable(final Process process){
+    private Observable<AbstractAction> errorObservable(Process process){
 
         return Observable.create(observableEmitter -> {
             String s;
@@ -201,30 +170,113 @@ public class Dumper implements DbFactory {
             this.position.updateFrom(position);
     }
 
-    private InsertAction parseInsert(String sql)
+    private class DataEmitter implements ObservableOnSubscribe<AbstractAction>
     {
-        String tableName = InsertParser.parseTable(sql);
-        if (tableName != null && !tableName.isEmpty())
-        {
+        private Process process;
+        String lastTable = null;
+        List<List<String>> insertData = new ArrayList<>();
+        ObservableEmitter<AbstractAction> observableEmitter;
+        long total = 0;
 
-            List<String> value = InsertParser.parseValue(sql);
-
-            if (value == null)
-                return null;
-
-            try {
-                Record record = getMySql().mixResultset(getRiverDatabase().schemaName, tableName, value);
-                if (record != null)
-                    return InsertAction.create(record);
-            } catch (SQLException e)
-            {
-
-            }
-
-            return  InsertAction.create(Record.create(tableName, getMySql().columns(getRiverDatabase().schemaName, tableName), value));
+        DataEmitter(Process process) {
+            this.process = process;
         }
 
-        return null;
+        void addInsertData(String table, List<String> data)
+        {
+            if (!table.equalsIgnoreCase(lastTable) || insertData.size() >= config.bulkSize)
+                emit();
+
+            insertData.add(data);
+            lastTable = table;
+        }
+
+        private void emit()
+        {
+            if (insertData.isEmpty())
+            {
+                lastTable = null;
+                return;
+            }
+
+            RecordsAction recordsAction = getMySql().mixRecords(getRiverDatabase().schemaName, lastTable, insertData);
+            if (recordsAction == null)
+                logger.warn("Lost {} recordsAction.", insertData.size());
+
+            for (Record record: recordsAction
+                 ) {
+                observableEmitter.onNext(InsertAction.create(record));
+            }
+
+            lastTable = null;
+            insertData.clear();
+        }
+
+        @Override
+        public void subscribe(ObservableEmitter<AbstractAction> observableEmitter) throws Exception {
+            this.observableEmitter = observableEmitter;
+
+            String sql;
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            try {
+
+                while(true)
+                {
+                    if (total - getStatistic().getRecordCount().get() > config.bulkSize * 20)
+                    {
+                        //logger.info("Dump {} and subscribe {}, sleep 0.5s", total, subscribeCount.get());
+                        //Thread.sleep(100);
+                        continue;
+                    }
+
+                    sql = bufferedReader.readLine();
+
+                    if (sql == null)
+                    {
+                        emit();
+                        break;
+                    }
+
+                    total++;
+
+                    if (sql.startsWith("CHANGE MASTER TO MASTER_LOG_FILE"))
+                    {
+                        emit();
+                        parsePosition(sql);
+                    } else if (sql.startsWith("INSERT INTO"))
+                    {
+                        String tableName = InsertParser.parseTable(sql);
+                        if (tableName != null && !tableName.isEmpty()) {
+                            List<String> data = InsertParser.parseValue(sql);
+                            if (data != null)
+                                addInsertData(tableName, data);
+                        }
+
+                    } else {
+                        emit();
+                        logger.info("Skip SQL {} ", sql);
+                    }
+                }
+
+                emit();
+
+                if (!position.isEmpty())
+                    observableEmitter.onNext(ChangePositionAction.create(position));
+
+                observableEmitter.onComplete();
+
+            } catch (IOException e)
+            {
+                observableEmitter.onError(new FatalDumpException(e));
+
+            } finally {
+                try {
+                    bufferedReader.close();
+                } catch (Exception e) {}
+            }
+
+            logger.info("Dump database: [{}] complete;", getRiverDatabase().schemaName);
+        }
     }
 
 }

@@ -118,7 +118,7 @@ public class BinLogSync {
     private static String getID(List<CanalEntry.Column> columns)
     {
         for (CanalEntry.Column column : columns) {
-            if (column.getName().equals("id"))
+            if (column.getName().equals("pk"))
                 return column.getValue();
             //System.out.println(column.getName() + " : " + column.getValue() + "    update=" + column.getUpdated());
         }

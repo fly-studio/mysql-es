@@ -9,7 +9,6 @@ import com.fly.sync.setting.Setting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
-import org.jdbi.v3.core.statement.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +24,7 @@ public class Executor {
     private static AtomicBoolean running = new AtomicBoolean(false);
     public final static Logger logger = LoggerFactory.getLogger(Main.class);
     private ExecutorService threadPool;
+    private Statistic statistic = new Statistic();
 
     public Executor()
     {
@@ -104,6 +104,10 @@ public class Executor {
 
     public MySql getMySql() {
         return mySql;
+    }
+
+    public Statistic getStatistic() {
+        return statistic;
     }
 
     public static boolean isRunning() {

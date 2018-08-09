@@ -1,8 +1,10 @@
-package com.fly.sync.mysql.model;
+package com.fly.sync.action;
 
 import com.fly.core.text.json.Jsonable;
 import com.fly.sync.contract.AbstractAction;
+import com.fly.sync.contract.AbstractRecord;
 import com.fly.sync.contract.DbFactory;
+import com.fly.sync.mysql.model.Record;
 import com.fly.sync.setting.River;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
@@ -10,30 +12,35 @@ import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Records extends ArrayList<Record> implements AbstractAction {
+public class RecordsAction extends ArrayList<Record> implements AbstractAction {
+    public final static Logger logger = LoggerFactory.getLogger(RecordsAction.class);
 
-    public static <T> Records create(List<T> objects)
+    public static <T> RecordsAction create(List<T> objects)
     {
-        Records records = new Records();
+        RecordsAction recordsAction = new RecordsAction();
 
         for (T o: objects
             ) {
-            if (o instanceof Record)
-                records.add((Record)o);
+            if (o instanceof AbstractRecord)
+                recordsAction.add(((AbstractRecord) o).getRecord());
         }
-        return records;
+
+        return recordsAction;
     }
 
     @NotNull
-    public Records search(@NotNull String key, @Nullable Object val, boolean strict)
+    public RecordsAction search(@NotNull String key, @Nullable Object val, boolean strict)
     {
-        Records results = new Records();
+        RecordsAction results = new RecordsAction();
         for (Record record: this
         ) {
             if (record.equals(key, val, strict))
@@ -43,7 +50,7 @@ public class Records extends ArrayList<Record> implements AbstractAction {
     }
 
     @Nullable
-    public Records search(@NotNull String key, @Nullable Object val)
+    public RecordsAction search(@NotNull String key, @Nullable Object val)
     {
         return search(key, val, false);
     }
@@ -65,10 +72,15 @@ public class Records extends ArrayList<Record> implements AbstractAction {
         return find(key, val, false);
     }
 
-
     public void execute(DbFactory dbFactory)
     {
+        long nanoTime = System.nanoTime();
+
+        dbFactory.getStatistic().getRecordCount().addAndGet(size());
+
         BulkRequest request = new BulkRequest();
+        request.setRefreshPolicy(WriteRequest.RefreshPolicy.NONE);
+
         try {
 
             for (Record record : this
@@ -79,6 +91,7 @@ public class Records extends ArrayList<Record> implements AbstractAction {
                                 .source(record.toJson(Jsonable.Builder.makeAdapter()), XContentType.JSON)
                 );
             }
+
         } catch (Exception e)
         {
             logger.error(e.getMessage(), e);
@@ -95,6 +108,8 @@ public class Records extends ArrayList<Record> implements AbstractAction {
         } catch (IOException e) {
             logger.error("Elasticsearch request failed.", e);
         }
+
+        logger.info("Execute {} records, duration: {} ms", size(), (System.nanoTime() - nanoTime) / 1000_000.0);
 
     }
 }
