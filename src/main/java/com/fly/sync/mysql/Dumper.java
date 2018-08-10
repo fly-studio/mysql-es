@@ -122,7 +122,6 @@ public class Dumper implements DbFactory {
                         process.destroy();
                     }
             );
-
     }
 
     private Observable<AbstractAction> dataObservable(Process process)
@@ -176,7 +175,6 @@ public class Dumper implements DbFactory {
         String lastTable = null;
         List<List<String>> insertData = new ArrayList<>();
         ObservableEmitter<AbstractAction> observableEmitter;
-        long total = 0;
 
         DataEmitter(Process process) {
             this.process = process;
@@ -222,7 +220,7 @@ public class Dumper implements DbFactory {
 
                 while(true)
                 {
-                    if (total - getStatistic().getRecordCount().get() > config.bulkSize * 20)
+                    if (getStatistic().getDumpCount().get() - getStatistic().getRecordCount().get() > config.bulkSize * 5)
                     {
                         //logger.info("Dump {} and subscribe {}, sleep 0.5s", total, subscribeCount.get());
                         //Thread.sleep(100);
@@ -237,7 +235,7 @@ public class Dumper implements DbFactory {
                         break;
                     }
 
-                    total++;
+                    getStatistic().getDumpCount().incrementAndGet();
 
                     if (sql.startsWith("CHANGE MASTER TO MASTER_LOG_FILE"))
                     {

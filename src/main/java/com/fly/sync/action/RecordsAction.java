@@ -109,7 +109,7 @@ public class RecordsAction extends ArrayList<Record> implements AbstractAction {
             logger.error("Elasticsearch request failed.", e);
         }
 
-        logger.info("Execute {} records, duration: {} ms", size(), (System.nanoTime() - nanoTime) / 1000_000.0);
+        logger.info("Sync {} records, duration: {} ms", size(), (System.nanoTime() - nanoTime) / 1000_000.0);
 
     }
 }

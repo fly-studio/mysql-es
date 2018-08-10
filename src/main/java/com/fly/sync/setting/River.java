@@ -285,6 +285,8 @@ public class River extends Jsonable {
         public List<String> fullColumns;
         @JsonProperty("column_alias")
         public Map<String, String> columnAlias = new HashMap<>();
+        @JsonProperty("date_format")
+        public String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
 
         public void validateColumns(List<String> fullColumns) throws ColumnNotFoundException
         {

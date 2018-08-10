@@ -5,6 +5,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Statistic {
     private AtomicLong subscribeCount = new AtomicLong(0);
     private AtomicLong recordCount = new AtomicLong(0);
+    private AtomicLong dumpCount = new AtomicLong(0);
+    private AtomicLong canalCount = new AtomicLong(0);
     private long createdAt = System.currentTimeMillis();
 
     public Statistic() {
@@ -21,5 +23,13 @@ public class Statistic {
 
     public AtomicLong getRecordCount() {
         return recordCount;
+    }
+
+    public AtomicLong getDumpCount() {
+        return dumpCount;
+    }
+
+    public AtomicLong getCanalCount() {
+        return canalCount;
     }
 }

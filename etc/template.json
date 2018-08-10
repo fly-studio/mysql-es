@@ -98,6 +98,20 @@
               "format": "seconds-since-the-epoch||milliseconds-since-the-epoch"
             }
           }
+        },
+        {
+          "long_to_string" : {
+            "match_mapping_type": "long",
+            "mapping": {
+              "type": "long",
+              "fields": {
+                "string": {
+                  "type": "string",
+                  "ignore_above": 255
+                }
+              }
+            }
+          }
         }
       ]
     }

@@ -1,5 +1,6 @@
 package com.fly.sync.mysql;
 
+import com.fly.core.database.SqlUtils;
 import com.fly.sync.action.RecordsAction;
 import com.fly.sync.contract.AbstractConnector;
 import com.fly.sync.exception.DisconnectionException;
@@ -281,7 +282,7 @@ public class MySql  {
         protected void doHeartbeat() throws Exception
         {
             Integer i = jdbi.withHandle(handle ->
-                 handle.createQuery("SELECT 1").mapTo(Integer.class).findOnly()
+                 handle.createQuery(SqlUtils.HEARTBEAT).mapTo(Integer.class).findOnly()
             );
 
             if (i == null || !i.equals(1))

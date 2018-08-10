@@ -82,6 +82,10 @@ public class Es {
         {
             DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(table.index);
             client.indices().delete(deleteIndexRequest);
+        } else if (existed)
+        {
+            logger.warn("Elastic Index [{}] Exists, Skip created.", table.index);
+            return;
         }
 
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(table.index);

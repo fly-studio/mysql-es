@@ -108,7 +108,7 @@ public class Emiter implements DbFactory {
             return;
 
         try {
-            this.getEs().createIndices(database, Setting.binLog.isEmpty(database.schemaName));
+            this.getEs().createIndices(database);
         } catch (IOException e) {
             throw new FatalEsException("Create Indices of DB: \"" + database.schemaName + "\" Failed.", e);
         }

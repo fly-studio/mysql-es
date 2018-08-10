@@ -1,5 +1,6 @@
 package com.fly.sync.setting;
 
+import com.alibaba.otter.canal.protocol.position.LogPosition;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fly.core.text.json.Jsonable;
 
@@ -46,6 +47,10 @@ public class BinLog extends Jsonable {
         public Position(String name, long position) {
             this.name = name;
             this.position = position;
+        }
+
+        public static Position create(LogPosition logPosition) {
+            return new Position(logPosition.getPostion().getJournalName(), logPosition.getPostion().getPosition());
         }
 
         @JsonIgnore

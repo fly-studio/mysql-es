@@ -15,7 +15,7 @@ public class Setting {
     public static String ETC_PATH = null;
 
     static {
-        String etcPath = System.getProperty("es.etc.path");
+        String etcPath = System.getProperty("me.etc.path");
         if (etcPath != null && etcPath.length() != 0)
             ETC_PATH = etcPath;
         else
@@ -71,7 +71,7 @@ public class Setting {
         }
 
         config.logDir = getEtcPath(config.logDir);
-        System.setProperty("es.log.path", config.logDir.getAbsolutePath());
+        System.setProperty("me.log.path", config.logDir.getAbsolutePath());
 
         // locate to user's log4j2.xml
         LoggerContext context = (org.apache.logging.log4j.core.LoggerContext) LogManager.getContext(false);
@@ -84,7 +84,7 @@ public class Setting {
         }
 
         config.dataDir = getEtcPath(config.dataDir);
-        System.setProperty("es.data.path", config.dataDir.getAbsolutePath());
+        System.setProperty("me.data.path", config.dataDir.getAbsolutePath());
 
 
         if (config.bulkSize < 10)
@@ -141,9 +141,14 @@ public class Setting {
         return river;
     }
 
+    public static File getDataDir()
+    {
+        return config.dataDir;
+    }
+
     public static BinLog getBinLog()
     {
-        return getBinLog(new File(config.dataDir, BINLOG_FILE));
+        return getBinLog(new File(getDataDir(), BINLOG_FILE));
     }
 
     public static BinLog getBinLog(File file)
