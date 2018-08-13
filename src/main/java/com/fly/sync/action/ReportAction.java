@@ -20,4 +20,9 @@ public class ReportAction implements AbstractAction {
         logger.trace("\nExecute Information:\n\t- Duration: {}\n\t- Records: {}\n\t\t- Dump: {}\n\t\t- Canal: {}", hms, statistic.getRecordCount(), statistic.getDumpCount(), statistic.getCanalCount());
     }
 
+    @Override
+    public String getGroup() {
+        return ReportAction.class.getName();
+    }
+
 }

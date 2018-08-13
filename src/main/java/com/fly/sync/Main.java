@@ -21,7 +21,26 @@ public class Main {
             return;
         }
 
+        logger.info("## set default uncaught exception handler");
+        setGlobalUncaughtExceptionHandler();
+
         Executor executor = new Executor();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                if (Executor.isRunning())
+                {
+                    executor.close();
+                    executor.stop();
+                    logger.info("## stop the sync");
+                }
+
+            } catch (Throwable e) {
+                logger.warn("##something goes wrong when stopping canal Server:", e);
+            } finally {
+                logger.info("## server is down.");
+            }
+        }));
 
         try {
             executor.connect();
@@ -36,7 +55,12 @@ public class Main {
             executor.stop();
         }
 
-        logger.info("exit.");
+    }
+
+    private static void setGlobalUncaughtExceptionHandler() {
+        Thread.setDefaultUncaughtExceptionHandler((Thread t, Throwable e)  -> {
+            logger.error("UnCaughtException", e);
+        });
     }
 
 }

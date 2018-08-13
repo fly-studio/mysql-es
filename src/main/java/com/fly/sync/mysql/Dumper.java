@@ -2,13 +2,14 @@ package com.fly.sync.mysql;
 
 import com.fly.sync.action.ChangePositionAction;
 import com.fly.sync.action.InsertAction;
-import com.fly.sync.action.RecordsAction;
 import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
 import com.fly.sync.exception.FatalDumpException;
+import com.fly.sync.executor.Executor;
 import com.fly.sync.executor.Statistic;
 import com.fly.sync.mysql.model.Record;
+import com.fly.sync.mysql.model.Records;
 import com.fly.sync.mysql.parser.InsertParser;
 import com.fly.sync.mysql.parser.PositionParser;
 import com.fly.sync.setting.BinLog;
@@ -35,6 +36,7 @@ public class Dumper implements DbFactory {
     private River river;
     private DbFactory dbFactory;
     private BinLog.Position position = new BinLog.Position();
+    Process process;
 
     public final static Logger logger = LoggerFactory.getLogger(Dumper.class);
 
@@ -100,7 +102,6 @@ public class Dumper implements DbFactory {
         }
 
         logger.info(cmd.toString().replace(river.my.password, "*"));
-        Process process;
 
         try {
             process = Runtime.getRuntime().exec(cmd.toString());
@@ -120,6 +121,7 @@ public class Dumper implements DbFactory {
                     throwable -> {
                         position.reset();
                         process.destroy();
+                        process = null;
                     }
             );
     }
@@ -136,7 +138,7 @@ public class Dumper implements DbFactory {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
             try {
-                while(true)
+                while(Executor.isRunning())
                 {
                     s = bufferedReader.readLine();
                     if (s == null)
@@ -197,11 +199,11 @@ public class Dumper implements DbFactory {
                 return;
             }
 
-            RecordsAction recordsAction = getMySql().mixRecords(getRiverDatabase().schemaName, lastTable, insertData);
-            if (recordsAction == null)
-                logger.warn("Lost {} recordsAction.", insertData.size());
+            Records records = getMySql().mixRecords(getRiverDatabase().schemaName, lastTable, insertData);
+            if (records == null)
+                logger.warn("Lost {} records.", insertData.size());
 
-            for (Record record: recordsAction
+            for (Record record: records
                  ) {
                 observableEmitter.onNext(InsertAction.create(record));
             }
@@ -218,11 +220,11 @@ public class Dumper implements DbFactory {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             try {
 
-                while(true)
+                while(Executor.isRunning())
                 {
                     if (getStatistic().getDumpCount().get() - getStatistic().getRecordCount().get() > config.bulkSize * 5)
                     {
-                        //logger.info("Dump {} and subscribe {}, sleep 0.5s", total, subscribeCount.get());
+                        //logger.info("Dump {} and subscribe {}, sleep 0.1s", total, getRecordCount.get());
                         //Thread.sleep(100);
                         continue;
                     }

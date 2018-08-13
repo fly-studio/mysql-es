@@ -6,37 +6,44 @@ import com.alibaba.otter.canal.instance.manager.model.CanalParameter;
 import com.alibaba.otter.canal.instance.manager.model.CanalStatus;
 import com.alibaba.otter.canal.parse.CanalEventParser;
 import com.alibaba.otter.canal.parse.inbound.AbstractEventParser;
+import com.alibaba.otter.canal.parse.index.CanalLogPositionManager;
+import com.alibaba.otter.canal.protocol.position.LogPosition;
 import com.fly.core.database.SqlUtils;
+import com.fly.core.text.RegexUtils;
 import com.fly.sync.Main;
 import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Date;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Pattern;
 
 public class Server {
 
-    private CanalInstanceWithManager manager;
-    private final static AtomicLong SERVER_ID = new AtomicLong(6586);
+    public final static Logger logger = LoggerFactory.getLogger(Server.class);
+    private CanalInstanceWithManager canalInstance;
+    private final static AtomicLong SERVER_ID = new AtomicLong(123);
     private River.Database database;
     private Canal canal;
+    private String filter;
 
     public Server(River river, River.Database database, BinLog.Position position) {
         this.database = database;
 
         canal = Config.build(river, database, position);
+        filter = buildFilter();
 
-        manager = new CanalInstanceWithManager(canal, getFilter());
+        canalInstance = new CanalInstanceWithManager(canal, filter);
     }
 
-    public String getFilter()
+    public String buildFilter()
     {
         StringBuilder sb = new StringBuilder();
-        sb.append(Pattern.quote(database.schemaName))
+        sb.append(RegexUtils.preg_quote(database.schemaName))
             .append("\\.");
 
         if (database.associates.size() > 1)
@@ -46,7 +53,7 @@ public class Server {
 
             for (String tableName: database.associates.keySet()
             ) {
-                sj.add(Pattern.quote(tableName));
+                sj.add(RegexUtils.preg_quote(tableName));
             }
             sb.append(sj.toString())
                 .append(")");
@@ -57,16 +64,26 @@ public class Server {
         return sb.toString();
     }
 
-    public CanalInstanceWithManager getManager() {
-        return manager;
+    public String getFilter() {
+        return filter;
+    }
+
+    public CanalInstanceWithManager getCanalInstance() {
+        return canalInstance;
     }
 
     public BinLog.Position getBinLogPosition()
     {
-        CanalEventParser eventParser = manager.getEventParser();
+        CanalEventParser eventParser = canalInstance.getEventParser();
+        if (!(eventParser instanceof AbstractEventParser))
+            return null;
 
-        return eventParser instanceof AbstractEventParser ?  BinLog.Position.create(((AbstractEventParser)eventParser).getLogPositionManager().getLatestIndexBy(database.schemaName)) : null;
+        CanalLogPositionManager canalLogPositionManager = ((AbstractEventParser)eventParser).getLogPositionManager();
+        LogPosition logPosition = canalLogPositionManager.getLatestIndexBy(database.schemaName);
+
+        return logPosition != null ? BinLog.Position.create(logPosition) : null;
     }
+
 
     public River.Database getDatabase() {
         return database;
@@ -83,13 +100,12 @@ public class Server {
 
     public void start()
     {
-
-        manager.start();
+        canalInstance.start();
     }
 
     public void stop()
     {
-        manager.stop();
+        canalInstance.stop();
     }
 
     private static class Config {

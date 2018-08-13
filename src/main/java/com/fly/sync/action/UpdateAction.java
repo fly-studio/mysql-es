@@ -11,23 +11,22 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class InsertAction implements AbstractRecordAction {
+public class UpdateAction implements AbstractRecordAction {
 
-    public final static Logger logger = LoggerFactory.getLogger(InsertAction.class);
+    public final static Logger logger = LoggerFactory.getLogger(UpdateAction.class);
+
     private Record record;
 
-    public InsertAction(Record record) {
+    public UpdateAction(Record record) {
         this.record = record;
     }
 
-    public static InsertAction create(Record record)
-    {
-        return new InsertAction(record);
+    public static UpdateAction create(Record record) {
+        return new UpdateAction(record);
     }
 
     @Override
     public void execute(DbFactory dbFactory) {
-
 
     }
 
@@ -40,12 +39,13 @@ public class InsertAction implements AbstractRecordAction {
                 .source(record.toJson(Jsonable.Builder.makeAdapter()), XContentType.JSON);
     }
 
+    @Override
     public Record getRecord() {
         return record;
     }
 
     @Override
     public String getGroup() {
-        return AbstractRecordAction.class.getName();
+        return UpdateAction.class.getName();
     }
 }

@@ -1,13 +1,13 @@
 package com.fly.sync.executor;
 
-import com.alibaba.otter.canal.client.CanalConnector;
-import com.alibaba.otter.canal.client.CanalConnectors;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.Message;
+import com.fly.sync.canal.Client;
+import com.fly.sync.canal.Server;
+import com.fly.sync.setting.Setting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,14 +16,29 @@ public class BinLogSync {
 
     public final static Logger logger = LoggerFactory.getLogger(BinLogSync.class);
 
-    public void run()
+    public static void main(String[] argv) {
+        try {
+            Setting.readSettings();
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return;
+        }
+System.out.println(Setting.binLog.get(Setting.river.databases.get(0).schemaName));
+
+
+        Server server = new Server(Setting.river, Setting.river.databases.get(0), Setting.binLog.get(Setting.river.databases.get(0).schemaName));
+        server.start();
+        System.out.println("Start a");
+        new BinLogSync()
+                .run(server);
+    }
+    public void run(Server server)
     {
         // 创建链接
-        CanalConnector connector = CanalConnectors.newSingleConnector(new InetSocketAddress("106.75.147.144",11111), "example", "", "");
+        Client connector = new Client(server);
         int batchSize = 10;
         try {
-            connector.connect();
-            connector.subscribe(".*\\..*");
+            connector.subscribe();
             connector.rollback();
 
             while (true) {
@@ -34,6 +49,7 @@ public class BinLogSync {
                     System.out.println("empty, and sleep");
                     try {
                         Thread.sleep(1000);
+                        continue;
                     } catch (InterruptedException e) {
                     }
                 } else {
@@ -44,11 +60,14 @@ public class BinLogSync {
 
                 connector.ack(batchId); // 提交确认
                 // connector.rollback(batchId); // 处理失败, 回滚数据
-            }
 
+                System.out.println("next i");
+            }
+        } catch (Exception e)
+        {
+            e.printStackTrace();
         } finally {
             System.out.println("exit manual.");
-            connector.disconnect();
         }
     }
 
@@ -70,29 +89,7 @@ public class BinLogSync {
             }
 
             CanalEntry.EventType eventType = rowChage.getEventType();
-            if (!entry.getHeader().getTableName().equals("chats"))
-                continue;
 
-            for (CanalEntry.RowData rowData : rowChage.getRowDatasList()) {
-                String id = getID(rowData.getAfterColumnsList());
-                if (id == null || id.length() == 0 || Long.parseLong(id) < 87382309) continue;
-                String key = entry.getHeader().getTableName() + "-" + id;
-                switch (eventType)
-                {
-                    case DELETE:
-                        idList.remove(key);
-                        break;
-                    case INSERT:
-                        idList.put(key, Long.parseLong(id));
-                        break;
-                    default:
-                        if (!idList.containsKey(key))
-                            logger.info(key);
-                        break;
-                }
-            }
-
-            /*
 
             System.out.println(String.format("================&gt; executor[%s:%s] , name[%s,%s] , eventType : %s",
                     entry.getHeader().getLogfileName(), entry.getHeader().getLogfileOffset(),
@@ -111,19 +108,10 @@ public class BinLogSync {
                     printColumn(rowData.getAfterColumnsList());
                 }
             }
-            //*/
+
         }
     }
 
-    private static String getID(List<CanalEntry.Column> columns)
-    {
-        for (CanalEntry.Column column : columns) {
-            if (column.getName().equals("pk"))
-                return column.getValue();
-            //System.out.println(column.getName() + " : " + column.getValue() + "    update=" + column.getUpdated());
-        }
-        return null;
-    }
 
     private static void printColumn(List<CanalEntry.Column> columns) {
         for (CanalEntry.Column column : columns) {

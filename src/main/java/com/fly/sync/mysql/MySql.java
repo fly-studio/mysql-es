@@ -1,12 +1,12 @@
 package com.fly.sync.mysql;
 
 import com.fly.core.database.SqlUtils;
-import com.fly.sync.action.RecordsAction;
 import com.fly.sync.contract.AbstractConnector;
 import com.fly.sync.exception.DisconnectionException;
 import com.fly.sync.exception.RecordNotFoundException;
 import com.fly.sync.mysql.model.DatabaseDao;
 import com.fly.sync.mysql.model.Record;
+import com.fly.sync.mysql.model.Records;
 import com.fly.sync.mysql.model.TableDao;
 import com.fly.sync.setting.River;
 import com.mysql.cj.jdbc.ConnectionImpl;
@@ -17,6 +17,7 @@ import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.Resultset;
 import com.mysql.cj.protocol.a.result.ByteArrayRow;
 import com.mysql.cj.protocol.a.result.ResultsetRowsStatic;
+import com.mysql.cj.result.DefaultColumnDefinition;
 import com.mysql.cj.result.Field;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
@@ -157,21 +158,54 @@ public class MySql  {
         return buildResultSet(data, columnDefinition(db, table));
     }
 
-    public Record mixRecord(String db, String table, List<String> data)
+    public Record mixRecord(String db, String table, Map<String, String> data) throws SQLException
     {
-        RecordsAction recordsAction = mixRecords(db, table, Arrays.asList(data));
+        if (data.isEmpty())
+            return null;
 
-        return recordsAction == null || recordsAction.isEmpty() ? null : recordsAction.get(0);
+        Field[] fields = columnDefinition(db, table).getFields();
+
+        Field[] newFields = new Field[data.keySet().size()];
+        List<String> newValue = new ArrayList<>();
+        for (Field field: fields
+             ) {
+            if (!data.containsKey(field.getName()))
+                continue;
+
+            newFields[newValue.size()] = field;
+            newValue.add(data.get(field.getName()));
+        }
+
+        ColumnDefinition columnDefinition = new DefaultColumnDefinition(newFields);
+
+        ResultSetImpl resultSet = buildResultSet(Arrays.asList(newValue), columnDefinition);
+
+        if (resultSet.next())
+        {
+            Map<String, Object> row = new HashMap<>();
+            for(int i = 1; i <= newFields.length; ++i)
+                row.put(newFields[i - 1].getName(), resultSet.getObject(i));
+            return Record.create(table, row);
+        }
+
+        return null;
     }
 
-    public RecordsAction mixRecords(String db, String table, List<List<String>> data)
+    public Record mixRecord(String db, String table, List<String> data)
+    {
+        Records records = mixRecords(db, table, Arrays.asList(data));
+
+        return records == null || records.isEmpty() ? null : records.get(0);
+    }
+
+    public Records mixRecords(String db, String table, List<List<String>> data)
     {
         try
         {
             ResultSetImpl resultSet = buildResultSet(data, db, table);
             List<String> columnNames = columnNames(db, table);
 
-            RecordsAction recordsAction = new RecordsAction();
+            Records records = new Records();
 
             while (resultSet.next())
             {
@@ -180,24 +214,24 @@ public class MySql  {
                 for(int i = 1; i <= columnNames.size(); ++i)
                     row.put(columnNames.get(i - 1), resultSet.getObject(i));
 
-                recordsAction.add(Record.create(table, row));
+                records.add(Record.create(table, row));
             }
 
-            return recordsAction;
+            return records;
 
         } catch (SQLException|ArrayIndexOutOfBoundsException e)
         {
-            logger.error("Mix recordsAction failed.", e);
+            logger.error("Mix records failed.", e);
             return null;
         }
     }
 
-    public RecordsAction queryIn(River.TableBase table, String whereInColumn, List<String> values)
+    public Records queryIn(River.TableBase table, String whereInColumn, List<String> values)
     {
         return getClient().withHandle(handle -> {
 
             String sql = table.toSql(whereInColumn);
-            RecordsAction recordsAction = new RecordsAction();
+            Records records = new Records();
 
             List<Map<String, Object>> list = handle.createQuery(sql)
                     .bindList("Values", values)
@@ -207,9 +241,9 @@ public class MySql  {
                     .filter(v -> v != null)
                     .collect(Collectors.toList());
 
-            list.forEach(kv -> recordsAction.add(Record.create(table.tableName, kv)));
+            list.forEach(kv -> records.add(Record.create(table.tableName, kv)));
 
-            return recordsAction;
+            return records;
         });
     }
 

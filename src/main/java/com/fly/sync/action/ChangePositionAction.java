@@ -28,6 +28,11 @@ public class ChangePositionAction implements AbstractAction {
     }
 
     @Override
+    public String getGroup() {
+        return ChangePositionAction.class.getName();
+    }
+
+    @Override
     public void execute(DbFactory dbFactory) {
 
         try

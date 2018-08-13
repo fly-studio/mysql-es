@@ -1,11 +1,12 @@
 package com.fly.sync.executor;
 
-import com.fly.sync.action.NullAction;
 import com.fly.sync.action.ReportAction;
+import com.fly.sync.canal.Canal;
 import com.fly.sync.contract.AbstractAction;
-import com.fly.sync.contract.AbstractRecord;
+import com.fly.sync.contract.AbstractRecordAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
+import com.fly.sync.exception.FatalCanalException;
 import com.fly.sync.exception.FatalEsException;
 import com.fly.sync.mysql.Dumper;
 import com.fly.sync.mysql.MySql;
@@ -26,6 +27,8 @@ public class Emiter implements DbFactory {
 
     private Executor executor;
     private River.Database database;
+    Canal canal;
+    Dumper dumper;
 
     public Emiter(Executor executor, River.Database database) {
         this.executor = executor;
@@ -80,7 +83,7 @@ public class Emiter implements DbFactory {
 
                 .observeOn(scheduler)
                 .subscribeOn(scheduler)
-                .concatMap(new SplitRecordActions())
+                .concatMap(new WithGroup())
 
                 .observeOn(scheduler)
                 .subscribeOn(scheduler)
@@ -90,16 +93,6 @@ public class Emiter implements DbFactory {
                 .subscribeOn(scheduler)
                 .map(new AliasColumns())
             ;
-    }
-
-    private Observable<AbstractAction> runCanal(Scheduler scheduler) {
-
-        return Observable.interval(1, TimeUnit.SECONDS).map(new Function<Long, AbstractAction>() {
-            @Override
-            public AbstractAction apply(Long aLong) throws Exception {
-                return new NullAction();
-            }
-        });
     }
 
     private void createIndices()
@@ -119,39 +112,65 @@ public class Emiter implements DbFactory {
         if (!Setting.binLog.isEmpty(database.schemaName))
             return Observable.empty();
 
-        Dumper dumper = new Dumper(Setting.config, Setting.river, this);
+        dumper = new Dumper(Setting.config, Setting.river, this);
 
         return dumper.run(scheduler);
     }
 
-    public class SplitRecordActions implements Function<List<AbstractAction>, Observable<List<AbstractAction>>>
+    private Observable<AbstractAction> runCanal(Scheduler scheduler) {
+
+        dumper = null;
+
+        if (Setting.binLog.isEmpty(database.schemaName))
+            throw new FatalCanalException("BinLog position lost.");
+
+        canal = new Canal(Setting.config, Setting.river, Setting.binLog.get(getRiverDatabase().schemaName), this);
+
+        return canal.run(scheduler);
+    }
+
+    public class WithGroup implements Function<List<AbstractAction>, Observable<List<AbstractAction>>>
     {
+        private String lastGroup;
+        private List<List<AbstractAction>> lists = new ArrayList<>();
+        private List<AbstractAction> actions = new ArrayList<>();
+
+        public void add(AbstractAction action)
+        {
+            if (!action.getGroup().equals(lastGroup))
+                emit();
+
+            lastGroup = action.getGroup();
+            actions.add(action);
+        }
+
+        public void emit()
+        {
+            if (actions.isEmpty())
+                return;
+
+            lists.add(Arrays.asList(actions.toArray(new AbstractAction[0])));
+            lastGroup = null;
+            actions.clear();
+        }
+
         @Override
         public Observable<List<AbstractAction>> apply(List<AbstractAction> actionList) throws Exception {
 
-            List<List<AbstractAction>> lists = new ArrayList<>();
-            List<AbstractAction> actions = new ArrayList<>();
+            synchronized (this)
+            {
+                lists.clear();
+                actions.clear();
 
-            for (AbstractAction action : actionList
-            ) {
-                if (!(action instanceof AbstractRecord))
-                {
-                    // set ChangePositionAction/Other into a singe
-                    if (!actions.isEmpty()) lists.add(actions);
-
-                    lists.add(Arrays.asList(action));
-
-                    actions = new ArrayList<>();
-                    continue;
+                for (AbstractAction action : actionList
+                ) {
+                    add(action);
                 }
 
-                actions.add(action);
+                emit();
+                return Observable.fromIterable(lists);
             }
 
-            // last
-            if (!actions.isEmpty()) lists.add(actions);
-
-            return Observable.fromIterable(lists);
         }
     }
 
@@ -160,7 +179,7 @@ public class Emiter implements DbFactory {
         @Override
         public List<AbstractAction> apply(List<AbstractAction> actionList) throws Exception {
 
-            if (actionList.size() == 1 && !(actionList.get(0) instanceof AbstractRecord))
+            if (actionList.isEmpty() || !(actionList.get(0) instanceof AbstractRecordAction))
                 return actionList;
 
             Relation relation = new Relation(Emiter.this, actionList);
@@ -175,6 +194,7 @@ public class Emiter implements DbFactory {
         @Override
         public List<AbstractAction> apply(List<AbstractAction> actionList) throws Exception {
             //Todo
+
             return actionList;
         }
     }

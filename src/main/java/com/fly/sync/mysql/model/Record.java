@@ -2,7 +2,6 @@ package com.fly.sync.mysql.model;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fly.sync.contract.AbstractRecord;
 import com.fly.sync.setting.River;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
@@ -12,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
-public class Record implements AbstractRecord {
+public class Record {
 
     public String table;
     public Map<String, Object> items;
@@ -115,11 +114,6 @@ public class Record implements AbstractRecord {
 
     public Record setTable(String tableName) {
         table = tableName;
-        return this;
-    }
-
-    @Override
-    public Record getRecord() {
         return this;
     }
 
