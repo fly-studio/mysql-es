@@ -1,6 +1,8 @@
 package com.fly.sync.es;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.core.io.IOUtils;
+import com.fly.core.text.json.Jsonable;
 import com.fly.sync.contract.AbstractConnector;
 import com.fly.sync.exception.OutOfRetryException;
 import com.fly.sync.setting.River;
@@ -22,7 +24,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.TimeZone;
 
 public class Es {
 
@@ -84,7 +89,7 @@ public class Es {
             client.indices().delete(deleteIndexRequest);
         } else if (existed)
         {
-            logger.warn("Elastic Index [{}] Exists, Skip created.", table.index);
+            logger.error("Elastic Index [{}] Exists, Skip created.", table.index);
             return;
         }
 
@@ -112,6 +117,16 @@ public class Es {
             River.Table table = entry.getValue();
             createIndex(table, force);
         }
+    }
+
+    public ObjectMapper getJsonMapper() {
+        ObjectMapper mapper = Jsonable.Builder.makeAdapter();
+
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        dateFormat.setTimeZone(TimeZone.getTimeZone(river.es.timeZone));
+        mapper.setDateFormat(dateFormat);
+
+        return mapper;
     }
 
     public class Connector extends AbstractConnector {

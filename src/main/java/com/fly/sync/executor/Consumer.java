@@ -1,5 +1,6 @@
 package com.fly.sync.executor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.AbstractRecordAction;
 import com.fly.sync.contract.DbFactory;
@@ -52,6 +53,11 @@ public class Consumer implements Observer<List<AbstractAction>>, DbFactory {
         return executor.getStatistic();
     }
 
+    @Override
+    public ObjectMapper getJsonMapper() {
+        return executor.getJsonMapper();
+    }
+
     public Executor getExecutor() {
         return executor;
     }
@@ -64,27 +70,32 @@ public class Consumer implements Observer<List<AbstractAction>>, DbFactory {
     @Override
     public void onNext(List<AbstractAction> actionList) {
 
-        if (actionList.isEmpty())
-            return;
-
-        getStatistic().getSubscribeCount().addAndGet(actionList.size());
-
-        // group by records
-        if (!(actionList.get(0) instanceof AbstractRecordAction))
+        synchronized (this)
         {
-            for (AbstractAction action: actionList
-                 ) {
-                action.execute(this);
+            if (actionList.isEmpty())
+                return;
+
+            getStatistic().getSubscribeCount().addAndGet(actionList.size());
+
+            // group by records
+            if (!(actionList.get(0) instanceof AbstractRecordAction))
+            {
+                for (AbstractAction action: actionList
+                ) {
+                    action.execute(this);
+                }
+
+                return;
             }
 
-            return;
+            executeRecords(actionList);
         }
 
-        executeRecords(actionList);
     }
 
     private void executeRecords(List<AbstractAction> actionList)
     {
+
         if (!(actionList.get(0) instanceof AbstractRecordAction))
             return;
 
@@ -99,6 +110,7 @@ public class Consumer implements Observer<List<AbstractAction>>, DbFactory {
 
             for (AbstractAction action : actionList
             ) {
+                action.execute(this);
                 request.add(
                         ((AbstractRecordAction)action).getRequest(this)
                 );

@@ -161,7 +161,7 @@ public class Relation {
             if (localValues == null || localValues.isEmpty())
                 return null;
 
-            return dbFactory.getMySql().queryIn(relation, relation.foreign, localValues);
+            return dbFactory.getMySql().getLocalQuery().queryIn(relation, relation.foreign, localValues);
         }
 
         @Nullable

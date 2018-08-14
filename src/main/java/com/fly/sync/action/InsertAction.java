@@ -1,6 +1,5 @@
 package com.fly.sync.action;
 
-import com.fly.core.text.json.Jsonable;
 import com.fly.sync.contract.AbstractRecordAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.mysql.model.Record;
@@ -27,7 +26,7 @@ public class InsertAction implements AbstractRecordAction {
 
     @Override
     public void execute(DbFactory dbFactory) {
-
+        dbFactory.getStatistic().getInsertCount().incrementAndGet();
 
     }
 
@@ -37,7 +36,7 @@ public class InsertAction implements AbstractRecordAction {
         River.Table table = dbFactory.getRiverDatabase().getTable(record.table);
 
         return new IndexRequest(table.index, table.type, record.getID(table))
-                .source(record.toJson(Jsonable.Builder.makeAdapter()), XContentType.JSON);
+                .source(record.toJson(dbFactory.getJsonMapper()), XContentType.JSON);
     }
 
     public Record getRecord() {

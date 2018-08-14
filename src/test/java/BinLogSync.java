@@ -1,5 +1,3 @@
-package com.fly.sync.executor;
-
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.Message;
 import com.fly.sync.canal.Client;
@@ -23,15 +21,16 @@ public class BinLogSync {
             logger.error(e.getMessage(), e);
             return;
         }
-System.out.println(Setting.binLog.get(Setting.river.databases.get(0).schemaName));
 
+        System.out.println(Setting.binLog.get(Setting.river.databases.get(0).schemaName));
 
         Server server = new Server(Setting.river, Setting.river.databases.get(0), Setting.binLog.get(Setting.river.databases.get(0).schemaName));
         server.start();
-        System.out.println("Start a");
+        System.out.println("Start Server");
         new BinLogSync()
                 .run(server);
     }
+
     public void run(Server server)
     {
         // 创建链接

@@ -1,5 +1,6 @@
 package com.fly.sync.mysql;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.action.ChangePositionAction;
 import com.fly.sync.action.InsertAction;
 import com.fly.sync.contract.AbstractAction;
@@ -67,6 +68,11 @@ public class Dumper implements DbFactory {
         return dbFactory.getStatistic();
     }
 
+    @Override
+    public ObjectMapper getJsonMapper() {
+        return dbFactory.getJsonMapper();
+    }
+
     public Observable<AbstractAction> run(Scheduler scheduler)
     {
         StringBuilder cmd = new StringBuilder();
@@ -114,9 +120,14 @@ public class Dumper implements DbFactory {
         logger.info("Dump database [{}] from mysqldump.", database.schemaName);
 
         return Observable.merge(
-                errorObservable(process).subscribeOn(scheduler),
-                dataObservable(process).subscribeOn(scheduler)
-            )
+                errorObservable(process)
+                        .subscribeOn(scheduler)
+                        .observeOn(scheduler),
+                dataObservable(process)
+                        .subscribeOn(scheduler)
+                        .observeOn(scheduler)
+
+                )
             .doOnError(
                     throwable -> {
                         position.reset();
@@ -199,7 +210,7 @@ public class Dumper implements DbFactory {
                 return;
             }
 
-            Records records = getMySql().mixRecords(getRiverDatabase().schemaName, lastTable, insertData);
+            Records records = getMySql().getUtcQuery().mixRecords(getRiverDatabase().schemaName, lastTable, insertData);
             if (records == null)
                 logger.warn("Lost {} records.", insertData.size());
 
@@ -254,7 +265,7 @@ public class Dumper implements DbFactory {
 
                     } else {
                         emit();
-                        logger.info("Skip SQL {} ", sql);
+                        logger.warn("Skip SQL {} ", sql);
                     }
                 }
 

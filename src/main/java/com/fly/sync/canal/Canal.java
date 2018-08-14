@@ -2,6 +2,7 @@ package com.fly.sync.canal;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.Message;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.action.ChangePositionAction;
 import com.fly.sync.action.DeleteAction;
 import com.fly.sync.action.InsertAction;
@@ -12,7 +13,6 @@ import com.fly.sync.es.Es;
 import com.fly.sync.exception.FatalCanalException;
 import com.fly.sync.executor.Executor;
 import com.fly.sync.executor.Statistic;
-import com.fly.sync.mysql.Dumper;
 import com.fly.sync.mysql.MySql;
 import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.Config;
@@ -41,7 +41,7 @@ public class Canal implements DbFactory {
     private Server server;
     private Client client;
 
-    public final static Logger logger = LoggerFactory.getLogger(Dumper.class);
+    public final static Logger logger = LoggerFactory.getLogger(Canal.class);
 
     public Canal(@NotNull Config config, @NotNull River river, BinLog.Position position, DbFactory dbFactory) {
         this.config = config;
@@ -78,6 +78,11 @@ public class Canal implements DbFactory {
         return dbFactory.getStatistic();
     }
 
+    @Override
+    public ObjectMapper getJsonMapper() {
+        return dbFactory.getJsonMapper();
+    }
+
     public Observable<AbstractAction> run(Scheduler scheduler)
     {
         server.start();
@@ -90,13 +95,15 @@ public class Canal implements DbFactory {
                 return null;
             }
         }
+        logger.info("Canal server started.");
 
         client.subscribe();
         client.rollback();
 
         return Observable.create(new DataEmitter())
                 .observeOn(scheduler)
-                .subscribeOn(scheduler);
+                .subscribeOn(scheduler)
+                ;
     }
 
     public void stop()
@@ -106,6 +113,7 @@ public class Canal implements DbFactory {
             client.unsubscribe();
             server.stop();
             server = null;
+            logger.info("Canal server stop.");
         }
     }
 
@@ -144,6 +152,9 @@ public class Canal implements DbFactory {
 
                 String tableName = entry.getHeader().getTableName();
 
+                if (!getRiverDatabase().hasTable(tableName))
+                    continue;
+
                 CanalEntry.EventType eventType = rowChange.getEventType();
 
                 switch (eventType)
@@ -151,19 +162,19 @@ public class Canal implements DbFactory {
                     case DELETE:
 
                         for (CanalEntry.RowData rowData : rowChange.getRowDatasList())
-                            actionList.add(DeleteAction.create(getMySql().mixRecord(getRiverDatabase().schemaName, tableName, getBeforeColumnsList(rowData))));
+                            actionList.add(DeleteAction.create(getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getBeforeColumnsList(rowData))));
 
                     break;
                     case INSERT:
 
                         for (CanalEntry.RowData rowData : rowChange.getRowDatasList())
-                            actionList.add(InsertAction.create(getMySql().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData))));
+                            actionList.add(InsertAction.create(getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData))));
 
                         break;
                     case UPDATE:
 
                         for (CanalEntry.RowData rowData : rowChange.getRowDatasList())
-                            actionList.add(UpdateAction.create(getMySql().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData))));
+                            actionList.add(UpdateAction.create(getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData))));
 
                         break;
                     case ALTER:

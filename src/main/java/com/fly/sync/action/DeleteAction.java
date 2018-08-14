@@ -24,7 +24,7 @@ public class DeleteAction implements AbstractRecordAction {
 
     @Override
     public void execute(DbFactory dbFactory) {
-
+        dbFactory.getStatistic().getDeleteCount().incrementAndGet();
     }
 
     @Override

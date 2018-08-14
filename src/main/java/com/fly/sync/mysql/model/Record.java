@@ -119,6 +119,7 @@ public class Record {
 
     public String toJson(ObjectMapper objectMapper) throws Exception
     {
-        return objectMapper.writeValueAsString(items);
+        return objectMapper
+                .writeValueAsString(items);
     }
 }

@@ -36,7 +36,7 @@ public class Main {
                 }
 
             } catch (Throwable e) {
-                logger.warn("##something goes wrong when stopping canal Server:", e);
+                logger.error("##something goes wrong when stopping canal Server:", e);
             } finally {
                 logger.info("## server is down.");
             }

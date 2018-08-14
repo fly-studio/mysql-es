@@ -21,8 +21,6 @@ public class River extends Jsonable {
     public Host my;
     public Host es;
     public String charset = "utf8";
-    @JsonProperty("server_id")
-    public int serverId = 9999;
 
     public List<Database> databases;
 
@@ -53,10 +51,14 @@ public class River extends Jsonable {
         public int port = 0;
         public String user = "";
         public String password = "";
+        @JsonProperty("time_zone")
+        public String timeZone = "UTC";
+
     }
 
     public static class Database {
-        @JsonProperty("schema") public String schemaName = "";
+        @JsonProperty("schema")
+        public String schemaName = "";
         public Map<String, Table> tables = new HashMap<>();
 
         // set in init
@@ -187,6 +189,10 @@ public class River extends Jsonable {
         public boolean hasWith(String tableName)
         {
             return tables.containsKey(tableName) && tables.get(tableName).hasWith();
+        }
+
+        public boolean hasTable(String tableName) {
+            return tables.containsKey(tableName);
         }
     }
 

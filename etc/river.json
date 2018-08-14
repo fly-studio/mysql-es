@@ -9,7 +9,8 @@
      * FLUSH PRIVILEGES;
      */
     "user": "canal",
-    "password" : ""
+    "password" : "",
+    "time_zone": "Asia/Shanghai"
   },
   "es" : {
     "host" : "127.0.0.1",
@@ -19,12 +20,11 @@
      * If you installed X-pack or SearchGuard, You can set a user for here
      */
     "user": "",
-    "password" : ""
+    "password" : "",
+    "time_zone": "Asia/Shanghai"
   },
   // Execute "Set NAMES utf8" once before SELECT
   "charset": "utf8",
-  // pseudo server pk like a slave
-  "server_id": 100000,
   "databases" : [
     {
       "schema" : "db1",

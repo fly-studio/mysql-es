@@ -17,7 +17,23 @@ public class ReportAction implements AbstractAction {
         long millis = System.currentTimeMillis()- statistic.getCreatedAt();
         String hms = DurationFormatUtils.formatDuration(millis, "d 'days' HH:mm:ss");
 
-        logger.trace("\nExecute Information:\n\t- Duration: {}\n\t- Records: {}\n\t\t- Dump: {}\n\t\t- Canal: {}", hms, statistic.getRecordCount(), statistic.getDumpCount(), statistic.getCanalCount());
+        logger.trace("\nExecute Information:\n" +
+                        "\t+ Duration: {}\n" +
+                        "\t+ Records: {}\n" +
+                        "\t\t- Dump: {}\n" +
+                        "\t\t- Canal: {}\n" +
+                        "\t\t+ DML:\n" +
+                        "\t\t\t- Insert: {}\n" +
+                        "\t\t\t- Update: {}\n" +
+                        "\t\t\t- Delete: {}",
+                hms,
+                statistic.getRecordCount(),
+                statistic.getDumpCount(),
+                statistic.getCanalCount(),
+                statistic.getInsertCount(),
+                statistic.getUpdateCount(),
+                statistic.getDeleteCount()
+        );
     }
 
     @Override

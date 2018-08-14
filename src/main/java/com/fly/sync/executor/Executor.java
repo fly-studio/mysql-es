@@ -1,5 +1,6 @@
 package com.fly.sync.executor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.Main;
 import com.fly.sync.es.Es;
 import com.fly.sync.exception.FatalException;
@@ -71,8 +72,7 @@ public class Executor {
                      ) {
             new Emiter(this, database)
                 .buildObservable(scheduler)
-                //.compose(FlowableBufferTimed.build(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize > 120 ? 120 : Setting.config.bulkSize))
-                .subscribeOn(scheduler)
+                //.subscribeOn(scheduler)
                 .observeOn(scheduler)
                 .subscribe(new Consumer(this, database));
         }
@@ -108,6 +108,11 @@ public class Executor {
 
     public Statistic getStatistic() {
         return statistic;
+    }
+
+    public ObjectMapper getJsonMapper() {
+
+        return es.getJsonMapper();
     }
 
     public static boolean isRunning() {

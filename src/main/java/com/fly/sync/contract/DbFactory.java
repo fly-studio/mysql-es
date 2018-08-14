@@ -1,5 +1,6 @@
 package com.fly.sync.contract;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.es.Es;
 import com.fly.sync.executor.Statistic;
 import com.fly.sync.mysql.MySql;
@@ -11,5 +12,6 @@ public interface DbFactory {
     MySql getMySql();
     River.Database getRiverDatabase();
     Statistic getStatistic();
+    ObjectMapper getJsonMapper();
 
 }

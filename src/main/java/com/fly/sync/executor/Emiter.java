@@ -1,12 +1,13 @@
 package com.fly.sync.executor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fly.sync.Main;
 import com.fly.sync.action.ReportAction;
 import com.fly.sync.canal.Canal;
 import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.AbstractRecordAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
-import com.fly.sync.exception.FatalCanalException;
 import com.fly.sync.exception.FatalEsException;
 import com.fly.sync.mysql.Dumper;
 import com.fly.sync.mysql.MySql;
@@ -16,15 +17,19 @@ import com.fly.sync.setting.Setting;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.functions.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class Emiter implements DbFactory {
 
+    public final static Logger logger = LoggerFactory.getLogger(Emiter.class);
     private Executor executor;
     private River.Database database;
     Canal canal;
@@ -57,6 +62,11 @@ public class Emiter implements DbFactory {
         return executor.getStatistic();
     }
 
+    @Override
+    public ObjectMapper getJsonMapper() {
+        return executor.getJsonMapper();
+    }
+
     public Executor getExecutor() {
         return executor;
     }
@@ -76,21 +86,17 @@ public class Emiter implements DbFactory {
                         .map(v -> new ReportAction())
             )
             .takeWhile(value -> executor.isRunning())
-
-                .observeOn(scheduler)
                 .subscribeOn(scheduler)
+                .observeOn(scheduler)
                 .buffer(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize)
 
                 .observeOn(scheduler)
-                .subscribeOn(scheduler)
                 .concatMap(new WithGroup())
 
                 .observeOn(scheduler)
-                .subscribeOn(scheduler)
                 .map(new WithRelations())
 
                 .observeOn(scheduler)
-                .subscribeOn(scheduler)
                 .map(new AliasColumns())
             ;
     }
@@ -119,14 +125,30 @@ public class Emiter implements DbFactory {
 
     private Observable<AbstractAction> runCanal(Scheduler scheduler) {
 
-        dumper = null;
+        return Observable.create( emitter -> {
+            while(Setting.binLog.isEmpty(database.schemaName))
+            {
+                try {
 
-        if (Setting.binLog.isEmpty(database.schemaName))
-            throw new FatalCanalException("BinLog position lost.");
+                    Thread.sleep(500);
+                } catch (InterruptedException e)
+                {
 
-        canal = new Canal(Setting.config, Setting.river, Setting.binLog.get(getRiverDatabase().schemaName), this);
+                }
+            }
+            dumper = null;
+            emitter.onNext(Main.NAME);
+            emitter.onComplete();
 
-        return canal.run(scheduler);
+        }).flatMap(nothing -> {
+
+            if (Setting.binLog.isEmpty(database.schemaName))
+                return Observable.empty();
+
+            canal = new Canal(Setting.config, Setting.river, Setting.binLog.get(getRiverDatabase().schemaName), this);
+
+            return canal.run(scheduler);
+        });
     }
 
     public class WithGroup implements Function<List<AbstractAction>, Observable<List<AbstractAction>>>
@@ -156,9 +178,12 @@ public class Emiter implements DbFactory {
 
         @Override
         public Observable<List<AbstractAction>> apply(List<AbstractAction> actionList) throws Exception {
-
             synchronized (this)
             {
+                if (actionList.isEmpty())
+                    return Observable.empty();
+
+
                 lists.clear();
                 actions.clear();
 
@@ -168,6 +193,11 @@ public class Emiter implements DbFactory {
                 }
 
                 emit();
+
+                List<Integer> counts = lists.stream().map(actions -> actions.size()).collect(Collectors.toList());
+
+                logger.trace("WithGroup Total: {}, split to {}", actionList.size(), counts);
+
                 return Observable.fromIterable(lists);
             }
 
@@ -178,6 +208,7 @@ public class Emiter implements DbFactory {
 
         @Override
         public List<AbstractAction> apply(List<AbstractAction> actionList) throws Exception {
+            logger.trace("WithRelations: {}", actionList.size());
 
             if (actionList.isEmpty() || !(actionList.get(0) instanceof AbstractRecordAction))
                 return actionList;
