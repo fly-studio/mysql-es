@@ -177,30 +177,25 @@ public class Emiter implements DbFactory {
         }
 
         @Override
-        public Observable<List<AbstractAction>> apply(List<AbstractAction> actionList) throws Exception {
-            synchronized (this)
-            {
-                if (actionList.isEmpty())
-                    return Observable.empty();
+        public synchronized Observable<List<AbstractAction>> apply(List<AbstractAction> actionList) throws Exception {
+            if (actionList.isEmpty())
+                return Observable.empty();
 
+            lists.clear();
+            actions.clear();
 
-                lists.clear();
-                actions.clear();
-
-                for (AbstractAction action : actionList
-                ) {
-                    add(action);
-                }
-
-                emit();
-
-                List<Integer> counts = lists.stream().map(actions -> actions.size()).collect(Collectors.toList());
-
-                logger.trace("WithGroup Total: {}, split to {}", actionList.size(), counts);
-
-                return Observable.fromIterable(lists);
+            for (AbstractAction action : actionList
+            ) {
+                add(action);
             }
 
+            emit();
+
+            List<Integer> counts = lists.stream().map(actions -> actions.size()).collect(Collectors.toList());
+
+            logger.trace("WithGroup Total: {}, split to {}", actionList.size(), counts);
+
+            return Observable.fromIterable(lists);
         }
     }
 

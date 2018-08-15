@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class River extends Jsonable {
     @JsonIgnore
@@ -163,11 +164,11 @@ public class River extends Jsonable {
                 return;
 
             String tableName = calledTable.tableName;
-            Associate associate = null;
+            Associate associate = null, targetAssociate = null;
             List<Relation> relationList = new ArrayList<>();
 
-            for (String leaf : withLeaves
-                 ) {
+            for (int i = 0; i < withLeaves.size(); i++) {
+                String leaf = withLeaves.get(i);
 
                 String _relationKey = tableName + NAMESPACE + leaf;
                 associate = findAssociate(_relationKey);
@@ -177,13 +178,13 @@ public class River extends Jsonable {
                 relationList.add(associate.getLastRelation());
 
                 tableName = associate.getLastRelation().tableName;
+
+                relationKey = calledTable.tableName + NAMESPACE + String.join(".", withLeaves.subList(0, i + 1));
+                if ((targetAssociate = findAssociate(relationKey)) == null)
+                    targetAssociate = addAssociate(tableName, relationKey, associate.parentTable, Arrays.asList(relationList.toArray(new Relation[0])));
+
+                targetAssociate.setCalledTable(calledTable);
             }
-
-            if (findAssociate(relationKey) == null)
-                associate = addAssociate(tableName, relationKey, associate.parentTable, relationList);
-
-            associate.setCalledTable(calledTable);
-
         }
 
         public boolean hasWith(String tableName)
@@ -193,6 +194,16 @@ public class River extends Jsonable {
 
         public boolean hasTable(String tableName) {
             return tables.containsKey(tableName);
+        }
+
+        @JsonIgnore
+        public boolean isSync(String tableName)
+        {
+            return tables.containsKey(tableName) && getTable(tableName).sync;
+        }
+
+        public List<Associate> beRelated(String tableName) {
+            return !associates.containsKey(tableName) ? Arrays.asList() : associates.get(tableName).stream().filter(associate -> associate.calledTable != null).collect(Collectors.toList());
         }
     }
 

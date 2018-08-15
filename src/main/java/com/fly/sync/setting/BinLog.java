@@ -53,6 +53,10 @@ public class BinLog extends Jsonable {
             return new Position(logPosition.getPostion().getJournalName(), logPosition.getPostion().getPosition());
         }
 
+        public static Position createVirtual() {
+            return new Position("mysql-bin.000001", 0);
+        }
+
         @JsonIgnore
         public boolean isEmpty()
         {

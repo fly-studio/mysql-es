@@ -3,10 +3,7 @@ package com.fly.sync.canal;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.Message;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fly.sync.action.ChangePositionAction;
-import com.fly.sync.action.DeleteAction;
-import com.fly.sync.action.InsertAction;
-import com.fly.sync.action.UpdateAction;
+import com.fly.sync.action.*;
 import com.fly.sync.contract.AbstractAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
@@ -14,6 +11,7 @@ import com.fly.sync.exception.FatalCanalException;
 import com.fly.sync.executor.Executor;
 import com.fly.sync.executor.Statistic;
 import com.fly.sync.mysql.MySql;
+import com.fly.sync.mysql.model.Record;
 import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.Config;
 import com.fly.sync.setting.River;
@@ -31,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class Canal implements DbFactory {
 
@@ -135,6 +134,7 @@ public class Canal implements DbFactory {
         private List<AbstractAction> parseEntries(List<CanalEntry.Entry> entries) throws SQLException
         {
             List<AbstractAction> actionList = new ArrayList<>();
+            List<AbstractAction> relateActionList = new ArrayList<>();
 
             for (CanalEntry.Entry entry : entries) {
                 if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONBEGIN || entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONEND) {
@@ -152,8 +152,9 @@ public class Canal implements DbFactory {
 
                 String tableName = entry.getHeader().getTableName();
 
-                if (!getRiverDatabase().hasTable(tableName))
-                    continue;
+                boolean sync = getRiverDatabase().isSync(tableName);
+                List<River.Associate> beRelatedList = getRiverDatabase().beRelated(tableName);
+
 
                 CanalEntry.EventType eventType = rowChange.getEventType();
 
@@ -162,27 +163,64 @@ public class Canal implements DbFactory {
                     case DELETE:
 
                         for (CanalEntry.RowData rowData : rowChange.getRowDatasList())
-                            actionList.add(DeleteAction.create(getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getBeforeColumnsList(rowData))));
+                        {
+                            Record record = getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getBeforeColumnsList(rowData));
+                            record.setModifiedColumns(getModifiedColumns(rowData.getBeforeColumnsList()));
 
-                    break;
+                            if (sync)
+                                actionList.add(DeleteAction.create(record));
+
+                            if (!beRelatedList.isEmpty())
+                                relateActionList.add(DeleteRelateAction.create(record, beRelatedList));
+                        }
+
+                        break;
                     case INSERT:
 
                         for (CanalEntry.RowData rowData : rowChange.getRowDatasList())
-                            actionList.add(InsertAction.create(getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData))));
+                        {
+                            Record record = getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData));
+                            record.setModifiedColumns(getModifiedColumns(rowData.getAfterColumnsList()));
+
+                            if (sync)
+                                actionList.add(InsertAction.create(record));
+
+                            if (!beRelatedList.isEmpty())
+                                relateActionList.add(InsertRelateAction.create(record, beRelatedList));
+                        }
 
                         break;
                     case UPDATE:
 
                         for (CanalEntry.RowData rowData : rowChange.getRowDatasList())
-                            actionList.add(UpdateAction.create(getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData))));
+                        {
+                            Record record = getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData));
+                            record.setModifiedColumns(getModifiedColumns(rowData.getAfterColumnsList()));
+
+                            if (sync)
+                                actionList.add(UpdateAction.create(record));
+
+                            if (!beRelatedList.isEmpty())
+                                relateActionList.add(UpdateRelateAction.create(record, beRelatedList));
+                        }
 
                         break;
                     case ALTER:
+
                         //TODO
                         break;
                 }
             }
+
+            // append
+            actionList.addAll(relateActionList);
+
             return actionList;
+        }
+
+        private List<String> getModifiedColumns(List<CanalEntry.Column> columns)
+        {
+            return columns.stream().filter(CanalEntry.Column::getUpdated).map(CanalEntry.Column::getName).collect(Collectors.toList());
         }
 
         private Map<String, String> getBeforeColumnsList(CanalEntry.RowData rowData)
@@ -224,13 +262,13 @@ public class Canal implements DbFactory {
 
                 try {
 
-                    Message message = client.getWithoutAck(config.bulkSize, (long) config.bulkSize, TimeUnit.MILLISECONDS);
+                    Message message = client.getWithoutAck(config.bulkSize, (long) config.flushBulkTime, TimeUnit.MILLISECONDS);
 
                     long batchId = message.getId();
                     int size = message.getEntries().size();
 
                     if (batchId == -1 || size == 0) {
-                        Thread.sleep(1000);
+                        Thread.sleep(config.flushBulkTime);
                         continue;
                     }
 
@@ -243,7 +281,6 @@ public class Canal implements DbFactory {
                              ) {
                             observableEmitter.onNext(action);
                         }
-
                     }
 
                     client.ack(batchId); // 提交确认
@@ -259,6 +296,8 @@ public class Canal implements DbFactory {
                     return;
                 }
             }
+
+            observableEmitter.onComplete();
         }
     }
 }

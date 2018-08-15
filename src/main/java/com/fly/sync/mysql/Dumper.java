@@ -37,7 +37,7 @@ public class Dumper implements DbFactory {
     private River river;
     private DbFactory dbFactory;
     private BinLog.Position position = new BinLog.Position();
-    Process process;
+    private Process process;
 
     public final static Logger logger = LoggerFactory.getLogger(Dumper.class);
 
@@ -146,9 +146,10 @@ public class Dumper implements DbFactory {
 
         return Observable.create(observableEmitter -> {
             String s;
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-            try {
+            try (
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))
+            ) {
                 while(Executor.isRunning())
                 {
                     s = bufferedReader.readLine();
@@ -167,10 +168,6 @@ public class Dumper implements DbFactory {
             {
                 observableEmitter.onError(new FatalDumpException(e));
 
-            } finally {
-                try {
-                    bufferedReader.close();
-                } catch (Exception e) {}
             }
 
         });
@@ -213,10 +210,12 @@ public class Dumper implements DbFactory {
             Records records = getMySql().getUtcQuery().mixRecords(getRiverDatabase().schemaName, lastTable, insertData);
             if (records == null)
                 logger.warn("Lost {} records.", insertData.size());
-
-            for (Record record: records
-                 ) {
-                observableEmitter.onNext(InsertAction.create(record));
+            else
+            {
+                for (Record record: records
+                ) {
+                    observableEmitter.onNext(InsertAction.create(record));
+                }
             }
 
             lastTable = null;
@@ -228,8 +227,10 @@ public class Dumper implements DbFactory {
             this.observableEmitter = observableEmitter;
 
             String sql;
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            try {
+
+            try (
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()))
+            ){
 
                 while(Executor.isRunning())
                 {
@@ -280,10 +281,6 @@ public class Dumper implements DbFactory {
             {
                 observableEmitter.onError(new FatalDumpException(e));
 
-            } finally {
-                try {
-                    bufferedReader.close();
-                } catch (Exception e) {}
             }
 
             logger.info("Dump database: [{}] complete;", getRiverDatabase().schemaName);

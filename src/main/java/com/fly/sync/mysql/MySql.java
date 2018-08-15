@@ -2,12 +2,10 @@ package com.fly.sync.mysql;
 
 import com.fly.core.database.SqlUtils;
 import com.fly.sync.contract.AbstractConnector;
+import com.fly.sync.exception.BinLogFormatException;
 import com.fly.sync.exception.DisconnectionException;
 import com.fly.sync.exception.RecordNotFoundException;
-import com.fly.sync.mysql.model.DatabaseDao;
-import com.fly.sync.mysql.model.Record;
-import com.fly.sync.mysql.model.Records;
-import com.fly.sync.mysql.model.TableDao;
+import com.fly.sync.mysql.model.*;
 import com.fly.sync.setting.River;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.Driver;
@@ -80,6 +78,9 @@ public class MySql  {
 
     public void validate() throws SQLException
     {
+        if (!localQuery.variable("binlog_format").equalsIgnoreCase("ROW") || !localQuery.variable("binlog_row_image").equalsIgnoreCase("FULL"))
+            throw new BinLogFormatException("MySQL must enable the binlog, And binlog_row_image = FULL, binlog_format = ROW.");
+
         for (River.Database database:
              river.databases) {
             if (!localQuery.exists(database.schemaName))
@@ -122,6 +123,13 @@ public class MySql  {
         public boolean exists(String db, String table)
         {
             return getClient().withExtension(TableDao.class, dao -> dao.find(db, table) != null);
+        }
+
+        public String variable(String name)
+        {
+            Variable variable = getClient().withExtension(VariableDao.class, dao -> dao.find(name));
+
+            return variable == null ? null : variable.value;
         }
 
         public List<String> columnNames(String db, String table) throws SQLException

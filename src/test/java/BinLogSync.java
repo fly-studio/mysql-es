@@ -2,6 +2,7 @@ import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.Message;
 import com.fly.sync.canal.Client;
 import com.fly.sync.canal.Server;
+import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.Setting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +23,11 @@ public class BinLogSync {
             return;
         }
 
-        System.out.println(Setting.binLog.get(Setting.river.databases.get(0).schemaName));
+        BinLog.Position position = Setting.binLog.get(Setting.river.databases.get(0).schemaName);
 
-        Server server = new Server(Setting.river, Setting.river.databases.get(0), Setting.binLog.get(Setting.river.databases.get(0).schemaName));
+        System.out.println(position);
+
+        Server server = new Server(Setting.river, Setting.river.databases.get(0), position != null ? position : BinLog.Position.createVirtual());
         server.start();
         System.out.println("Start Server");
         new BinLogSync()

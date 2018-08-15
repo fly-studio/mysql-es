@@ -10,6 +10,7 @@ public class Statistic {
     private AtomicLong insertCount = new AtomicLong(0);
     private AtomicLong updateCount = new AtomicLong(0);
     private AtomicLong deleteCount = new AtomicLong(0);
+    private AtomicLong relateCount = new AtomicLong(0);
 
     private long createdAt = System.currentTimeMillis();
 
@@ -47,5 +48,9 @@ public class Statistic {
 
     public AtomicLong getDeleteCount() {
         return deleteCount;
+    }
+
+    public AtomicLong getRelateCount() {
+        return relateCount;
     }
 }

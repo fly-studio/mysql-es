@@ -20,7 +20,6 @@ public class Setting {
             ETC_PATH = etcPath;
         else
             ETC_PATH = new File(System.getProperty("user.dir"), "etc").getAbsolutePath();
-
     }
 
     public final static String RIVER_FILE = "river.json";

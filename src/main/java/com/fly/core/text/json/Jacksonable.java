@@ -2,6 +2,7 @@ package com.fly.core.text.json;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fly.core.contract.AbstractJsonable;
@@ -18,6 +19,7 @@ public class Jacksonable implements AbstractJsonable {
             objectMapper.enable(JsonParser.Feature.ALLOW_COMMENTS);
             objectMapper.enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES);
             objectMapper.enable(JsonParser.Feature.ALLOW_TRAILING_COMMA);
+            objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
             objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
             return objectMapper;
         }
