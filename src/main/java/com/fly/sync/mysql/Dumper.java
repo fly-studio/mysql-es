@@ -214,6 +214,7 @@ public class Dumper implements DbFactory {
             {
                 for (Record record: records
                 ) {
+                    record.setInserted();
                     observableEmitter.onNext(InsertAction.create(record));
                 }
             }

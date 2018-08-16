@@ -7,20 +7,18 @@ import com.fly.sync.mysql.model.Record;
 import com.fly.sync.setting.River;
 import org.elasticsearch.action.DocWriteRequest;
 
-import java.util.List;
-
 public class InsertRelateAction implements AbstractRecordAction, AbstractRelateAction {
 
     private Record record;
-    private List<River.Associate> beRelatedList;
+    private River.Associate associate;
 
-    public InsertRelateAction(Record record, List<River.Associate> beRelatedList) {
+    public InsertRelateAction(Record record, River.Associate associate) {
         this.record = record;
-        this.beRelatedList = beRelatedList;
+        this.associate = associate;
     }
 
-    public static InsertRelateAction create(Record record, List<River.Associate> beRelatedList) {
-        return new InsertRelateAction(record, beRelatedList);
+    public static InsertRelateAction create(Record record, River.Associate associate) {
+        return new InsertRelateAction(record, associate);
     }
 
     @Override
@@ -41,5 +39,10 @@ public class InsertRelateAction implements AbstractRecordAction, AbstractRelateA
     @Override
     public String getGroup() {
         return AbstractRelateAction.class.getName();
+    }
+
+    @Override
+    public River.Associate getAssociate() {
+        return associate;
     }
 }

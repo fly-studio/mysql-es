@@ -8,20 +8,18 @@ import com.fly.sync.setting.River;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 
-import java.util.List;
-
 public class UpdateRelateAction implements AbstractRecordAction, AbstractRelateAction {
 
     private Record record;
-    private List<River.Associate> beRelatedList;
+    private River.Associate associate;
 
-    public UpdateRelateAction(Record record, List<River.Associate> beRelatedList) {
+    public UpdateRelateAction(Record record, River.Associate associate) {
         this.record = record;
-        this.beRelatedList = beRelatedList;
+        this.associate = associate;
     }
 
-    public static UpdateRelateAction create(Record record, List<River.Associate> beRelatedList) {
-        return new UpdateRelateAction(record, beRelatedList);
+    public static UpdateRelateAction create(Record record, River.Associate associate) {
+        return new UpdateRelateAction(record, associate);
     }
 
     @Override
@@ -43,5 +41,10 @@ public class UpdateRelateAction implements AbstractRecordAction, AbstractRelateA
     @Override
     public String getGroup() {
         return AbstractRelateAction.class.getName();
+    }
+
+    @Override
+    public River.Associate getAssociate() {
+        return associate;
     }
 }

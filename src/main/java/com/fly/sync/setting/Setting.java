@@ -1,5 +1,6 @@
 package com.fly.sync.setting;
 
+import com.fly.core.io.IOUtils;
 import com.fly.core.text.json.Jsonable;
 import com.fly.sync.exception.ConfigException;
 import com.sun.istack.internal.NotNull;
@@ -175,7 +176,15 @@ public class Setting {
             if (!file.exists())
                 file.createNewFile();
 
-            binLog.toJson(file);
+            String json = binLog.toJson();
+            if (json == null || json.length() <= 10 || json.charAt(0) != '{' || json.charAt(json.length() - 1) != '}') {
+                logger.error("BinLog JSON format error.");
+                return;
+            }
+
+            IOUtils.writeUtf8(file, json);
+
+            logger.info("BinLog write success.");
         }
 
     }

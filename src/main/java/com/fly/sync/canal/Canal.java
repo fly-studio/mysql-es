@@ -153,7 +153,7 @@ public class Canal implements DbFactory {
                 String tableName = entry.getHeader().getTableName();
 
                 boolean sync = getRiverDatabase().isSync(tableName);
-                List<River.Associate> beRelatedList = getRiverDatabase().beRelated(tableName);
+                List<River.Associate> associates = getRiverDatabase().getAssociates(tableName);
 
 
                 CanalEntry.EventType eventType = rowChange.getEventType();
@@ -165,13 +165,14 @@ public class Canal implements DbFactory {
                         for (CanalEntry.RowData rowData : rowChange.getRowDatasList())
                         {
                             Record record = getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getBeforeColumnsList(rowData));
-                            record.setModifiedColumns(getModifiedColumns(rowData.getBeforeColumnsList()));
+                            record.setDeleted();
 
                             if (sync)
                                 actionList.add(DeleteAction.create(record));
 
-                            if (!beRelatedList.isEmpty())
-                                relateActionList.add(DeleteRelateAction.create(record, beRelatedList));
+                            for (River.Associate associate: associates
+                                 )
+                                relateActionList.add(DeleteRelateAction.create(record, associate));
                         }
 
                         break;
@@ -180,13 +181,14 @@ public class Canal implements DbFactory {
                         for (CanalEntry.RowData rowData : rowChange.getRowDatasList())
                         {
                             Record record = getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData));
-                            record.setModifiedColumns(getModifiedColumns(rowData.getAfterColumnsList()));
+                            record.setInserted();
 
                             if (sync)
                                 actionList.add(InsertAction.create(record));
 
-                            if (!beRelatedList.isEmpty())
-                                relateActionList.add(InsertRelateAction.create(record, beRelatedList));
+                            for (River.Associate associate: associates
+                            )
+                                relateActionList.add(InsertRelateAction.create(record, associate));
                         }
 
                         break;
@@ -195,13 +197,14 @@ public class Canal implements DbFactory {
                         for (CanalEntry.RowData rowData : rowChange.getRowDatasList())
                         {
                             Record record = getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData));
-                            record.setModifiedColumns(getModifiedColumns(rowData.getAfterColumnsList()));
+                            record.setUpdated(getModifiedColumns(rowData.getAfterColumnsList()));
 
                             if (sync)
                                 actionList.add(UpdateAction.create(record));
 
-                            if (!beRelatedList.isEmpty())
-                                relateActionList.add(UpdateRelateAction.create(record, beRelatedList));
+                            for (River.Associate associate: associates
+                            )
+                                relateActionList.add(UpdateRelateAction.create(record, associate));
                         }
 
                         break;

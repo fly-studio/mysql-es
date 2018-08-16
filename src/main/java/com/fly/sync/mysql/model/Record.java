@@ -1,7 +1,7 @@
 package com.fly.sync.mysql.model;
 
 
-import alexh.weak.Dynamic;
+import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.setting.River;
 import com.google.common.collect.Sets;
@@ -9,17 +9,14 @@ import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 
 import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 public class Record {
 
-    public static boolean NESTED = true;
-    public final static String DOT = ".";
-
     public String table;
-    protected Map<String, Object> items;
-    protected Set<String> modifiedColumns = new HashSet<>();
+    private Map<String, Object> items;
+    private Map<String, Record> relations = new HashMap<>();
+    private Set<String> modifiedColumns = new HashSet<>();
+    private CanalEntry.EventType eventType = null;
 
     public Record(String table, Map<String, Object> items) {
         this.table = table;
@@ -56,6 +53,68 @@ public class Record {
         return record;
     }
 
+    public Record setEventType(CanalEntry.EventType eventType) {
+        this.eventType = eventType;
+
+        return this;
+    }
+
+    public Record setInserted()
+    {
+        setAllModifiedColumns();
+
+        return setEventType(CanalEntry.EventType.INSERT);
+    }
+
+    public Record setDeleted()
+    {
+        setAllModifiedColumns();
+
+        return setEventType(CanalEntry.EventType.DELETE);
+    }
+
+    public Record setUpdated(List<String> columnNames)
+    {
+
+        setModifiedColumns(columnNames);
+
+        return setEventType(CanalEntry.EventType.UPDATE);
+    }
+
+    public boolean setModifiedColumn(String columnName)
+    {
+        if (items.containsKey(columnName)) {
+            modifiedColumns.add(columnName);
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean setAllModifiedColumns()
+    {
+        modifiedColumns.clear();
+        modifiedColumns.addAll(keys());
+
+        return true;
+    }
+
+    public boolean setModifiedColumns(List<String> columnNames)
+    {
+        Set<String> keys = Sets.newHashSet(items.keySet());
+
+        keys.retainAll(columnNames);
+
+        modifiedColumns.addAll(keys);
+
+        return !keys.isEmpty();
+    }
+
+    public Record setTable(String tableName) {
+        table = tableName;
+        return this;
+    }
+
     public boolean equals(@NotNull String key, @Nullable Object val, boolean strict)
     {
         if (containsKey(key))
@@ -78,17 +137,27 @@ public class Record {
 
     public boolean containsKey(@NotNull String key)
     {
-        return NESTED ? Dynamic.from(items).dget(key).isPresent() : items.containsKey(key);
+        return items.containsKey(key);
     }
 
     public Object get(@NotNull String key)
     {
-        return containsKey(key) ? (NESTED ? Dynamic.from(items).dget(key).asObject() : items.get(key)) : null;
+        return items.get(key);
     }
 
-    public Object get(@Nullable String relationKey, String key)
+    public Object get(String relationKey, String key)
     {
-        return get(null == relationKey || relationKey.isEmpty() ? key : relationKey + "." + key);
+        if (relationKey == null || relationKey.isEmpty())
+            return get(key);
+
+        Record record = getRelation(relationKey);
+
+        return record == null ? null : record.get(key);
+    }
+
+    public Record getRelation(@Nullable String relationKey)
+    {
+        return relations.get(relationKey);
     }
 
     public Record put(@NotNull String key, Object val)
@@ -98,52 +167,14 @@ public class Record {
 
     public Record set(@NotNull String key, Object val)
     {
-        if (NESTED)
-        {
-            String[] segments = key.split(Pattern.quote(DOT));
-
-            Object obj = items;
-            int i = 0;
-            for (; i < segments.length - 1; ) {
-                if (!(obj instanceof Map))
-                    obj = new HashMap<String, Object>();
-
-                if (!((Map) obj).containsKey(segments[i]))
-                    ((Map)obj).put(segments[i], new HashMap<String, Object>());
-
-                obj = ((Map)obj).get(segments[i]);
-
-                i++;
-            }
-
-            ((Map)obj).put(segments[i], val);
-        } else
-            items.put(key, val);
+        items.put(key, val);
 
         return this;
     }
 
-    private static Stream<String> dots(@NotNull Map.Entry entry, @Nullable final String parentKey)
-    {
-        Object obj = entry.getValue();
-
-        String _parentKey = (parentKey == null ? "" : parentKey + DOT ) + entry.getKey().toString();
-
-        if (!(obj instanceof Map<?, ?>))
-            return Stream.of(_parentKey);
-        else
-            return ((Map<?, ?>) obj)
-                    .entrySet().stream().flatMap(entry1 -> Record.dots(entry1, _parentKey));
-    }
-
-    private static Stream<String> dots(@NotNull Map.Entry entry)
-    {
-        return dots(entry, null);
-    }
-
     public Set<String> keys()
     {
-        return NESTED ? Sets.newHashSet(items.entrySet().stream().flatMap(Record::dots).iterator()) : items.keySet();
+        return items.keySet();
     }
 
     public String getID(River.Table table)
@@ -160,41 +191,29 @@ public class Record {
         return sj.toString();
     }
 
-    public void with(@NotNull String relationKey, @NotNull Map<String, Object> kv)
-    {
-        Record record = Record.create(null, kv);
-        with(relationKey, record);
-    }
 
     public void with(@NotNull String relationKey, @NotNull Record record)
     {
-        for (String key : record.keys()
-        ) {
-            set(relationKey + DOT + key, record.get(key));
-        }
-    }
-
-    public Record setModifiedColumn(String columnName)
-    {
-        modifiedColumns.add(columnName);
-
-        return this;
-    }
-
-    public Record setModifiedColumns(List<String> columnNames)
-    {
-        modifiedColumns.addAll(columnNames);
-
-        return this;
-    }
-
-    public Record setTable(String tableName) {
-        table = tableName;
-        return this;
+        relations.put(relationKey, record);
     }
 
     public String getTable() {
         return table;
+    }
+
+    public boolean isDeleted()
+    {
+        return eventType == CanalEntry.EventType.DELETE;
+    }
+
+    public boolean isUpdated()
+    {
+        return eventType == CanalEntry.EventType.UPDATE;
+    }
+
+    public boolean isInserted()
+    {
+        return eventType == CanalEntry.EventType.INSERT;
     }
 
     public Map<String, Object> getItems() {
@@ -205,9 +224,68 @@ public class Record {
         return modifiedColumns;
     }
 
+    public boolean isModified(String columnName)
+    {
+        return modifiedColumns.contains(columnName);
+    }
+
+    public Map<String, Record> getRelations() {
+        return relations;
+    }
+
+    public Map<String, Object> getModifiedItems()
+    {
+        if (modifiedColumns.size() == items.keySet().size())
+            return items;
+
+        Map<String, Object> newItems = new HashMap<>();
+
+        for (String key: modifiedColumns
+        )
+            newItems.put(key, isDeleted() ? null : get(key));
+
+        return newItems;
+    }
+
+    public Map<String, Object> mix(boolean nested)
+    {
+        Map<String, Object> newItems = getModifiedItems();
+
+        for (Map.Entry<String, Record> entry: relations.entrySet()
+        ) {
+            String relationKey = entry.getKey();
+            Map<String, Object> value = entry.getValue().mix(nested);
+
+            if (nested)
+            {
+                newItems.put(relationKey, value);
+            } else {
+                for (Map.Entry<String, Object> entry1: value.entrySet()
+                ) {
+                    newItems.put(relationKey + River.DOT + entry1.getKey(), entry1.getValue());
+                }
+            }
+        }
+
+        return newItems;
+    }
+
+    public Map<String, Object> mix()
+    {
+        return mix(false);
+    }
+
+    public String toJson(ObjectMapper objectMapper, boolean nested) throws Exception
+    {
+        Map<String, Object> mix = mix(nested);
+
+        return objectMapper
+                .writeValueAsString(mix);
+    }
+
     public String toJson(ObjectMapper objectMapper) throws Exception
     {
-        return objectMapper
-                .writeValueAsString(items);
+        return toJson(objectMapper, false);
     }
+
 }

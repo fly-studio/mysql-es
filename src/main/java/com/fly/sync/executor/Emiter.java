@@ -11,7 +11,7 @@ import com.fly.sync.es.Es;
 import com.fly.sync.exception.FatalEsException;
 import com.fly.sync.mysql.Dumper;
 import com.fly.sync.mysql.MySql;
-import com.fly.sync.mysql.Relation;
+import com.fly.sync.mysql.relation.Relation;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
 import io.reactivex.Observable;
@@ -191,7 +191,7 @@ public class Emiter implements DbFactory {
 
             emit();
 
-            List<Integer> counts = lists.stream().map(actions -> actions.size()).collect(Collectors.toList());
+            List<Integer> counts = lists.stream().map(List::size).collect(Collectors.toList());
 
             logger.trace("WithGroup Total: {}, split to {}", actionList.size(), counts);
 
@@ -203,10 +203,12 @@ public class Emiter implements DbFactory {
 
         @Override
         public List<AbstractAction> apply(List<AbstractAction> actionList) throws Exception {
-            logger.trace("WithRelations: {}", actionList.size());
 
-            if (actionList.isEmpty() || !(actionList.get(0) instanceof AbstractRecordAction))
+            if (actionList.isEmpty() || !(actionList.get(0) instanceof AbstractRecordAction)) {
                 return actionList;
+            }
+
+            logger.trace("WithRelations: {}", actionList.size());
 
             Relation relation = new Relation(Emiter.this, actionList);
             relation.load();

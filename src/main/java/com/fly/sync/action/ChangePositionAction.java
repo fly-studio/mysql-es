@@ -38,6 +38,9 @@ public class ChangePositionAction implements AbstractAction {
         try
         {
             Setting.binLog.set(dbFactory.getRiverDatabase().schemaName, binLogPosition);
+
+            logger.info("Write BinLog Position: {} : [{}: {}]", dbFactory.getRiverDatabase().schemaName, binLogPosition.name, binLogPosition.position);
+
             Setting.saveBinLog();
         } catch (Exception e)
         {

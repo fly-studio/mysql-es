@@ -4,6 +4,7 @@ import com.fly.sync.executor.Executor;
 import com.fly.sync.setting.Setting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.Signal;
 
 public class Main {
 
@@ -26,20 +27,10 @@ public class Main {
 
         Executor executor = new Executor();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                if (Executor.isRunning())
-                {
-                    executor.close();
-                    executor.stop();
-                    logger.info("## stop the sync");
-                }
+        Signal.handle(new Signal("INT"), signal -> shutdown(executor));
 
-            } catch (Throwable e) {
-                logger.error("##something goes wrong when stopping canal Server:", e);
-            } finally {
-                logger.info("## server is down.");
-            }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            shutdown(executor);
         }));
 
         try {
@@ -61,6 +52,23 @@ public class Main {
         Thread.setDefaultUncaughtExceptionHandler((Thread t, Throwable e)  -> {
             logger.error("UnCaughtException", e);
         });
+    }
+
+    private static void shutdown(Executor executor)
+    {
+        try {
+            if (Executor.isRunning())
+            {
+                executor.close();
+                executor.stop();
+                logger.info("## stop the sync");
+            }
+
+        } catch (Throwable e) {
+            logger.error("##something goes wrong when stopping canal Server:", e);
+        } finally {
+            logger.info("## server is down.");
+        }
     }
 
 }

@@ -1,6 +1,7 @@
 package com.fly.core.io;
 
 import com.fly.core.text.json.StripJsonComment;
+import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 
@@ -18,7 +19,14 @@ public class IOUtils {
         return str;
     }
 
-    public static StringBuffer readByte(File file) throws IOException
+    public static void writeUtf8(File file, String content) throws IOException
+    {
+        BufferedSink sink = Okio.buffer(Okio.sink(file));
+        sink.writeUtf8(content);
+        sink.close();
+    }
+
+    public static StringBuffer readBytes(File file) throws IOException
     {
         BufferedSource source = Okio.buffer(Okio.source(file));
         StringBuffer buffer = new StringBuffer();
@@ -27,6 +35,13 @@ public class IOUtils {
         source.close();
 
         return buffer;
+    }
+
+    public static void writeBytes(File file, byte[] bytes) throws IOException
+    {
+        BufferedSink sink = Okio.buffer(Okio.sink(file));
+        sink.write(bytes);
+        sink.close();
     }
 
     public static String readJson(File file) throws IOException

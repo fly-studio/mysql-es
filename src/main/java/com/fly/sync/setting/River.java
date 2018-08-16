@@ -15,7 +15,9 @@ public class River extends Jsonable {
     @JsonIgnore
     public final static Logger logger = LoggerFactory.getLogger(Main.class);
     @JsonIgnore
-    private static final String NAMESPACE = "::";
+    public static final String NAMESPACE = "::";
+    @JsonIgnore
+    public static final String DOT = ".";
     @JsonIgnore
     private static final String ASTERISK = "*";
 
@@ -44,7 +46,17 @@ public class River extends Jsonable {
 
     public static List<String> getRelationKeyList(String relationKey)
     {
-        return Arrays.asList(relationKey.replaceFirst("^(.*"+NAMESPACE+")", "").split("\\."));
+        return Arrays.asList(relationKey.replaceFirst("^(.*"+NAMESPACE+")", "").split("\\" + DOT));
+    }
+
+    public static String makeRelationKey(String tableName, List<String> relationKeys)
+    {
+        return tableName + NAMESPACE + String.join(DOT, relationKeys);
+    }
+
+    public static String makeRelationKey(String tableName, String relationKeys)
+    {
+        return tableName + NAMESPACE + relationKeys;
     }
 
     public static class Host {
@@ -94,7 +106,7 @@ public class River extends Jsonable {
                     if (relationEntry.getKey() == null || relationEntry.getKey().isEmpty())
                         continue;
 
-                    String relationKey = tableName + NAMESPACE + relationEntry.getKey();
+                    String relationKey = makeRelationKey(tableName, relationEntry.getKey());
                     Relation relation = relationEntry.getValue();
 
                     relation.schemaName = schemaName;
@@ -111,7 +123,7 @@ public class River extends Jsonable {
                     String relationKey = table.withs.get(i);
                     if (relationKey == null) continue;
 
-                    relationKey = tableName + NAMESPACE + relationKey;
+                    relationKey = makeRelationKey(tableName, relationKey);
 
                     setCalledToAssociate(relationKey, table);
                 }
@@ -131,19 +143,19 @@ public class River extends Jsonable {
             return null;
         }
 
-        void newAssociate(String relatedTableName)
+        private void newAssociate(String relatedTableName)
         {
             if (!associates.containsKey(relatedTableName))
                 associates.put(relatedTableName, new ArrayList<>());
         }
 
-        Associate addAssociate(String relatedTableName, String relationKey, Table parentTable, Relation relation)
+        private Associate addAssociate(String relatedTableName, String relationKey, Table parentTable, Relation relation)
         {
 
             return addAssociate(relatedTableName, relationKey, parentTable, Arrays.asList(relation));
         }
 
-        Associate addAssociate(String relatedTableName, String relationKey, Table parentTable, List<Relation> relationList)
+        private Associate addAssociate(String relatedTableName, String relationKey, Table parentTable, List<Relation> relationList)
         {
             newAssociate(relatedTableName);
 
@@ -156,7 +168,7 @@ public class River extends Jsonable {
             return related;
         }
 
-        void setCalledToAssociate(String relationKey, Table calledTable)
+        private void setCalledToAssociate(String relationKey, Table calledTable)
         {
             List<String> withLeaves = getRelationKeyList(relationKey);
 
@@ -164,13 +176,13 @@ public class River extends Jsonable {
                 return;
 
             String tableName = calledTable.tableName;
-            Associate associate = null, targetAssociate = null;
+            Associate associate, targetAssociate = null;
             List<Relation> relationList = new ArrayList<>();
 
             for (int i = 0; i < withLeaves.size(); i++) {
                 String leaf = withLeaves.get(i);
 
-                String _relationKey = tableName + NAMESPACE + leaf;
+                String _relationKey = makeRelationKey(tableName, leaf);
                 associate = findAssociate(_relationKey);
 
                 if (associate == null) return;
@@ -179,11 +191,21 @@ public class River extends Jsonable {
 
                 tableName = associate.getLastRelation().tableName;
 
-                relationKey = calledTable.tableName + NAMESPACE + String.join(".", withLeaves.subList(0, i + 1));
+                relationKey = makeRelationKey(calledTable.tableName, withLeaves.subList(0, i + 1));
                 if ((targetAssociate = findAssociate(relationKey)) == null)
                     targetAssociate = addAssociate(tableName, relationKey, associate.parentTable, Arrays.asList(relationList.toArray(new Relation[0])));
 
                 targetAssociate.setCalledTable(calledTable);
+            }
+
+            // add the middle relation like "comments::user.extra" to user's table and extra's table
+            for(int i = 0; i < targetAssociate.nestedRelations.size(); ++i)
+            {
+                Relation relation = targetAssociate.nestedRelations.get(i);
+                List<Associate> associateList = associates.get(relation.tableName);
+
+                if (associateList != null && !associateList.contains(targetAssociate))
+                    associateList.add(targetAssociate);
             }
         }
 
@@ -202,9 +224,34 @@ public class River extends Jsonable {
             return tables.containsKey(tableName) && getTable(tableName).sync;
         }
 
-        public List<Associate> beRelated(String tableName) {
-            return !associates.containsKey(tableName) ? Arrays.asList() : associates.get(tableName).stream().filter(associate -> associate.calledTable != null).collect(Collectors.toList());
+        public List<Associate> getAssociates(String tableName, boolean unique) {
+            List<Associate> associateList = !associates.containsKey(tableName)
+                    ? Arrays.asList()
+                    : associates.get(tableName)
+                        .stream()
+                        .filter(associate -> associate.calledTable != null)
+                        .collect(Collectors.toList())
+                    ;
+
+            return !unique
+                    ? associateList
+                    : associateList
+                        .stream()
+                        .filter(associate -> {
+                            String key = associate.relationKey + DOT;
+                            return associateList
+                                    .stream()
+                                    .filter(associate1 -> associate1.relationKey.contains(key))
+                                    .count() == 0;
+                        })
+                        .collect(Collectors.toList());
         }
+
+        public List<Associate> getAssociates(String tableName)
+        {
+            return getAssociates(tableName, true);
+        }
+
     }
 
     public static class Table extends TableBase {
@@ -234,12 +281,7 @@ public class River extends Jsonable {
 
         public List<String> getFullWiths()
         {
-            List<String> withNames = new ArrayList<>();
-            for (String with: withs
-                 ) {
-                withNames.add(tableName + NAMESPACE + with);
-            }
-            return withNames;
+            return withs.stream().map(with -> makeRelationKey(tableName, with)).collect(Collectors.toList());
         }
 
         void padColumns()
@@ -315,6 +357,11 @@ public class River extends Jsonable {
             }
 
             columnAlias.entrySet().removeIf(entry -> !fullColumns.contains(entry.getKey()));
+        }
+
+        public boolean equals(Object other)
+        {
+            return other instanceof String ? ((String) other).equalsIgnoreCase(tableName) : super.equals(other);
         }
 
         @JsonIgnore
@@ -399,6 +446,17 @@ public class River extends Jsonable {
         public void setCalledTable(Table calledTable)
         {
            this.calledTable = calledTable;
+        }
+
+        public int findOffset(String tableName) {
+            if (calledTable != null && calledTable.equals(tableName)) return 0;
+
+            for (int i = 0; i < nestedRelations.size(); i++) {
+                if (nestedRelations.get(0).equals(tableName))
+                    return i + 1;
+            }
+
+            return -1;
         }
     }
 }

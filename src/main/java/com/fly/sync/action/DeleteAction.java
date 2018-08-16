@@ -43,4 +43,6 @@ public class DeleteAction implements AbstractRecordAction {
     public String getGroup() {
         return DeleteAction.class.getName();
     }
+
+
 }

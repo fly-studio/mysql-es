@@ -49,6 +49,7 @@ public class Records extends ArrayList<Record> {
             if (record.equals(key, val, strict))
                 return record;
         }
+
         return null;
     }
 
@@ -58,4 +59,8 @@ public class Records extends ArrayList<Record> {
         return find(key, val, false);
     }
 
+    public void addUnique(Record record) {
+        if (!contains(record))
+            add(record);
+    }
 }
