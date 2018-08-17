@@ -3,6 +3,7 @@ package com.fly.sync.executor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.action.DeleteAction;
 import com.fly.sync.contract.AbstractAction;
+import com.fly.sync.contract.AbstractLifeCycle;
 import com.fly.sync.contract.AbstractRecordAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
@@ -17,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 
-public class Consumer implements Observer<List<AbstractAction>>, DbFactory {
+public class Consumer extends AbstractLifeCycle implements Observer<List<AbstractAction>>, DbFactory {
 
     public final static Logger logger = LoggerFactory.getLogger(Consumer.class);
     private final static List<String> bulkGroup = Arrays.asList(
@@ -34,6 +35,19 @@ public class Consumer implements Observer<List<AbstractAction>>, DbFactory {
         this.executor = executor;
         this.database = database;
         writer = new Writer(this);
+    }
+
+    @Override
+    public void start() {
+        super.start();
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+
+        if (null != disposable && !disposable.isDisposed())
+            disposable.dispose();
     }
 
     @Override
@@ -81,12 +95,17 @@ public class Consumer implements Observer<List<AbstractAction>>, DbFactory {
         getStatistic().getSubscribeCount().addAndGet(actionList.size());
         getStatistic().getRecordCount().addAndGet(actionList.stream().filter(action -> action instanceof AbstractRecordAction).count());
 
-        // bulk
-        if (bulkGroup.contains(actionList.get(0).getGroup()))
+        try
         {
-            writer.executeBulk(actionList);
-        } else {
-            writer.execute(actionList);
+            // bulk
+            if (bulkGroup.contains(actionList.get(0).getGroup()))
+            {
+                writer.executeBulk(actionList);
+            } else {
+                writer.execute(actionList);
+            }
+        } catch (Exception e) {
+            onError(e);
         }
     }
 
@@ -99,6 +118,6 @@ public class Consumer implements Observer<List<AbstractAction>>, DbFactory {
     @Override
     public void onComplete() {
         disposable.dispose();
-        executor.stop();
+        executor.triggerStop();
     }
 }

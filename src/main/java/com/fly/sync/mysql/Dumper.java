@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.action.ChangePositionAction;
 import com.fly.sync.action.InsertAction;
 import com.fly.sync.contract.AbstractAction;
+import com.fly.sync.contract.AbstractLifeCycle;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
-import com.fly.sync.exception.FatalDumpException;
+import com.fly.sync.exception.DumpFatalException;
 import com.fly.sync.executor.Executor;
 import com.fly.sync.executor.Statistic;
 import com.fly.sync.mysql.model.Record;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Dumper implements DbFactory {
+public class Dumper extends AbstractLifeCycle implements DbFactory {
 
     private Config config;
     private River river;
@@ -46,6 +47,19 @@ public class Dumper implements DbFactory {
         this.config = config;
         this.river = river;
         this.dbFactory = dbFactory;
+    }
+
+    @Override
+    public void start() {
+        super.start();
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+
+        if (null != process && process.isAlive())
+            process.destroy();
     }
 
     @Override
@@ -114,7 +128,7 @@ public class Dumper implements DbFactory {
 
         } catch (IOException e)
         {
-            return Observable.error(new FatalDumpException(e));
+            return Observable.error(new DumpFatalException(e));
         }
 
         logger.info("Dump database [{}] from mysqldump.", database.schemaName);
@@ -150,7 +164,7 @@ public class Dumper implements DbFactory {
             try (
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))
             ) {
-                while(Executor.isRunning())
+                while(Executor.isRunning() && isStart())
                 {
                     s = bufferedReader.readLine();
                     if (s == null)
@@ -159,14 +173,14 @@ public class Dumper implements DbFactory {
                     if (s.contains("[Warning]"))
                         continue;
 
-                    observableEmitter.onError(new FatalDumpException(s));
+                    observableEmitter.onError(new DumpFatalException(s));
                 }
 
                 observableEmitter.onComplete();
 
             } catch (IOException e)
             {
-                observableEmitter.onError(new FatalDumpException(e));
+                observableEmitter.onError(new DumpFatalException(e));
 
             }
 
@@ -233,12 +247,12 @@ public class Dumper implements DbFactory {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()))
             ){
 
-                while(Executor.isRunning())
+                while(Executor.isRunning() && isStart())
                 {
                     if (getStatistic().getDumpCount().get() - getStatistic().getRecordCount().get() > config.bulkSize * 5)
                     {
                         //logger.info("Dump {} and subscribe {}, sleep 0.1s", total, getRecordCount.get());
-                        //Thread.sleep(100);
+                        Thread.sleep(100);
                         continue;
                     }
 
@@ -280,7 +294,7 @@ public class Dumper implements DbFactory {
 
             } catch (IOException e)
             {
-                observableEmitter.onError(new FatalDumpException(e));
+                observableEmitter.onError(new DumpFatalException(e));
 
             }
 

@@ -5,10 +5,11 @@ import com.fly.sync.Main;
 import com.fly.sync.action.ReportAction;
 import com.fly.sync.canal.Canal;
 import com.fly.sync.contract.AbstractAction;
+import com.fly.sync.contract.AbstractLifeCycle;
 import com.fly.sync.contract.AbstractRecordAction;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
-import com.fly.sync.exception.FatalEsException;
+import com.fly.sync.exception.EsFatalException;
 import com.fly.sync.mysql.Dumper;
 import com.fly.sync.mysql.MySql;
 import com.fly.sync.mysql.relation.Relation;
@@ -27,17 +28,34 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public class Emiter implements DbFactory {
+public class Emiter extends AbstractLifeCycle implements DbFactory {
 
     public final static Logger logger = LoggerFactory.getLogger(Emiter.class);
     private Executor executor;
     private River.Database database;
-    Canal canal;
-    Dumper dumper;
+    private Canal canal = null;
+    private Dumper dumper = null;
 
     public Emiter(Executor executor, River.Database database) {
         this.executor = executor;
         this.database = database;
+
+    }
+
+    @Override
+    public void start() {
+        super.start();
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+
+        if (null != dumper)
+            dumper.stop();
+
+        if (null != canal)
+            canal.stop();
     }
 
     @Override
@@ -86,6 +104,7 @@ public class Emiter implements DbFactory {
                         .map(v -> new ReportAction())
             )
             .takeWhile(value -> executor.isRunning())
+
                 .subscribeOn(scheduler)
                 .observeOn(scheduler)
                 .buffer(Setting.config.flushBulkTime, TimeUnit.MILLISECONDS, scheduler, Setting.config.bulkSize)
@@ -109,7 +128,7 @@ public class Emiter implements DbFactory {
         try {
             this.getEs().createIndices(database);
         } catch (IOException e) {
-            throw new FatalEsException("Create Indices of DB: \"" + database.schemaName + "\" Failed.", e);
+            throw new EsFatalException("Create Indices of DB: \"" + database.schemaName + "\" Failed.", e);
         }
     }
 
@@ -119,8 +138,13 @@ public class Emiter implements DbFactory {
             return Observable.empty();
 
         dumper = new Dumper(Setting.config, Setting.river, this);
+        dumper.start();
 
-        return dumper.run(scheduler);
+        return dumper.run(scheduler)
+                .doOnComplete(() -> {
+                    dumper.stop();
+                    dumper = null;
+                });
     }
 
     private Observable<AbstractAction> runCanal(Scheduler scheduler) {
@@ -133,10 +157,11 @@ public class Emiter implements DbFactory {
                     Thread.sleep(500);
                 } catch (InterruptedException e)
                 {
-
+                    emitter.onComplete();
+                    return;
                 }
             }
-            dumper = null;
+
             emitter.onNext(Main.NAME);
             emitter.onComplete();
 
@@ -146,6 +171,7 @@ public class Emiter implements DbFactory {
                 return Observable.empty();
 
             canal = new Canal(Setting.config, Setting.river, Setting.binLog.get(getRiverDatabase().schemaName), this);
+            canal.start();
 
             return canal.run(scheduler);
         });

@@ -449,10 +449,11 @@ public class River extends Jsonable {
         }
 
         public int findOffset(String tableName) {
+
             if (calledTable != null && calledTable.equals(tableName)) return 0;
 
             for (int i = 0; i < nestedRelations.size(); i++) {
-                if (nestedRelations.get(0).equals(tableName))
+                if (nestedRelations.get(i).equals(tableName))
                     return i + 1;
             }
 

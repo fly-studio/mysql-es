@@ -11,6 +11,7 @@ import com.alibaba.otter.canal.server.exception.CanalServerException;
 import com.alibaba.otter.canal.store.CanalEventStore;
 import com.alibaba.otter.canal.store.model.Event;
 import com.alibaba.otter.canal.store.model.Events;
+import com.fly.sync.contract.AbstractLifeCycle;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Client {
+public class Client extends AbstractLifeCycle {
 
     public final static Logger logger = LoggerFactory.getLogger(Client.class);
     private Server server;

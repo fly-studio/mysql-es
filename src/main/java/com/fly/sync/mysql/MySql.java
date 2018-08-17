@@ -373,8 +373,10 @@ public class MySql  {
 
         @Override
         protected void doClose() throws Exception {
-            connection.close();
-            utcConnection.close();
+            if (null != connection && !connection.isClosed())
+                connection.close();
+            if (null != utcConnection && !utcConnection.isClosed())
+                utcConnection.close();
         }
 
 

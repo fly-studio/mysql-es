@@ -13,6 +13,10 @@ public class Main {
     public final static String DESCRIPTION = "Sync MySQL to ElasticSearch with relationship";
     public final static String VERSION = "1.0.0";
 
+    public final static Thread mainThread = Thread.currentThread();
+    private static volatile boolean signalExit = false;
+
+
     public static void main(String[] argv) {
 
         try {
@@ -27,24 +31,40 @@ public class Main {
 
         Executor executor = new Executor();
 
-        Signal.handle(new Signal("INT"), signal -> shutdown(executor));
+
+        Signal.handle(new Signal("INT"), signal -> {
+            logger.trace("Shutdown from INT signal: {}-{}", Thread.currentThread().getName(), Thread.currentThread().getId());
+
+            signalExit = true;
+
+            shutdown(executor);
+        });
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            shutdown(executor);
-        }));
+            logger.trace("Shutdown from Runtime hook.");
+
+            if (!signalExit)
+                shutdown(executor);
+        }, "Shutdown-Thread"));
+
+        //RxJavaPlugins.setErrorHandler(executor::throwException);
 
         try {
-            executor.connect();
-            executor.validate();
+
+            executor.triggerStart();
+
             executor.run();
-            executor.await();
+
+        } catch (InterruptedException e)
+        {
+
         } catch (Exception e)
         {
             logger.error(e.getMessage(), e);
-        } finally {
-            executor.close();
-            executor.stop();
         }
+
+        logger.info("Server down.");
+
 
     }
 
@@ -56,18 +76,12 @@ public class Main {
 
     private static void shutdown(Executor executor)
     {
-        try {
-            if (Executor.isRunning())
-            {
-                executor.close();
-                executor.stop();
-                logger.info("## stop the sync");
-            }
+         try {
+
+            executor.triggerStop();
 
         } catch (Throwable e) {
             logger.error("##something goes wrong when stopping canal Server:", e);
-        } finally {
-            logger.info("## server is down.");
         }
     }
 

@@ -1,5 +1,7 @@
 package com.fly.sync.setting;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fly.core.io.IOUtils;
 import com.fly.core.text.json.Jsonable;
 import com.fly.sync.exception.ConfigException;
@@ -10,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 
 public class Setting {
 
@@ -158,8 +161,14 @@ public class Setting {
 
         BinLog log;
         try {
-             log = Jsonable.fromJson(BinLog.class, file);
-        } catch (Exception e) {
+            log = Jsonable.fromJson(BinLog.class, file);
+        }
+        catch (JsonParseException | JsonMappingException e)
+        {
+            logger.error(e.getMessage(), e);
+            log = new BinLog();
+        } catch (IOException e)
+        {
             log = new BinLog();
         }
 

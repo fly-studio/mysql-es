@@ -11,6 +11,7 @@ import com.alibaba.otter.canal.protocol.position.LogPosition;
 import com.fly.core.database.SqlUtils;
 import com.fly.core.text.RegexUtils;
 import com.fly.sync.Main;
+import com.fly.sync.contract.AbstractLifeCycle;
 import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.River;
 import com.fly.sync.setting.Setting;
@@ -22,7 +23,7 @@ import java.util.Date;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Server {
+public class Server extends AbstractLifeCycle {
 
     public final static Logger logger = LoggerFactory.getLogger(Server.class);
     private CanalInstanceWithManager canalInstance;
@@ -98,13 +99,18 @@ public class Server {
         return canal.getCanalParameter();
     }
 
+    @Override
     public void start()
     {
+        super.start();
+
         canalInstance.start();
     }
 
     public void stop()
     {
+        super.stop();
+
         canalInstance.stop();
     }
 

@@ -177,6 +177,7 @@ public class Es {
         {
             if (null != client) {
                 client.close();
+                restClient.close();
             }
 
             client = null;

@@ -50,7 +50,7 @@ public class RelationRecords {
 
     public void relateBySubAssociate(River.Associate associate, int relationOffset)
     {
-        if (records.isEmpty() || loadedRelations.containsKey(associate.relationKey) || relationOffset >= associate.nestedRelations.size())
+        if (records.isEmpty() || loadedRelations.containsKey(associate.relationKey) || relationOffset < 0 || relationOffset >= associate.nestedRelations.size())
             return;
 
         Records lastRecords = records;
@@ -64,7 +64,7 @@ public class RelationRecords {
         if (records.isEmpty())
             return;
 
-        relateBySubAssociate(associate ,associate.findOffset(tableName));
+        relateBySubAssociate(associate, associate.findOffset(tableName));
     }
 
     public void relateByWiths()

@@ -5,9 +5,10 @@ import com.alibaba.otter.canal.protocol.Message;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.action.*;
 import com.fly.sync.contract.AbstractAction;
+import com.fly.sync.contract.AbstractLifeCycle;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.es.Es;
-import com.fly.sync.exception.FatalCanalException;
+import com.fly.sync.exception.CanalFatalException;
 import com.fly.sync.executor.Executor;
 import com.fly.sync.executor.Statistic;
 import com.fly.sync.mysql.MySql;
@@ -31,7 +32,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public class Canal implements DbFactory {
+public class Canal extends AbstractLifeCycle implements DbFactory {
 
     private Config config;
     private River river;
@@ -55,6 +56,27 @@ public class Canal implements DbFactory {
     {
         server = new Server(river, getRiverDatabase(), position);
         client = new Client(server);
+    }
+
+    @Override
+    public void start() {
+        super.start();
+
+        server.start();
+        client.start();
+
+    }
+
+    @Override
+    public void stop()
+    {
+        super.stop();
+
+        client.unsubscribe();
+        server.stop();
+        client.stop();
+
+        logger.info("Canal server stop.");
     }
 
     @Override
@@ -84,16 +106,16 @@ public class Canal implements DbFactory {
 
     public Observable<AbstractAction> run(Scheduler scheduler)
     {
-        server.start();
         while(!server.getCanalInstance().getMetaManager().isStart())
         {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 logger.error(e.getMessage(), e);
-                return null;
+                return Observable.empty();
             }
         }
+
         logger.info("Canal server started.");
 
         client.subscribe();
@@ -103,24 +125,6 @@ public class Canal implements DbFactory {
                 .observeOn(scheduler)
                 .subscribeOn(scheduler)
                 ;
-    }
-
-    public void stop()
-    {
-        if (null != server)
-        {
-            client.unsubscribe();
-            server.stop();
-            server = null;
-            logger.info("Canal server stop.");
-        }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-
-        stop();
     }
 
     private class DataEmitter implements ObservableOnSubscribe<AbstractAction> {
@@ -254,12 +258,17 @@ public class Canal implements DbFactory {
         public void subscribe(ObservableEmitter<AbstractAction> observableEmitter) throws Exception {
             this.observableEmitter = observableEmitter;
 
-            while (Executor.isRunning()) {
+            while (Executor.isRunning() && isStart()) {
 
                 if (getStatistic().getDumpCount().get() + getStatistic().getCanalCount().get() - getStatistic().getRecordCount().get() > config.bulkSize * 5)
                 {
                     //logger.info("Canal {} and subscribe {}, sleep 0.1s", total, getRecordCount.get());
-                    //Thread.sleep(100);
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e)
+                    {
+                        break;
+                    }
                     continue;
                 }
 
@@ -276,12 +285,11 @@ public class Canal implements DbFactory {
                     }
 
                     List<AbstractAction> actionList = parseEntries(message.getEntries());
-                    if (!actionList.isEmpty())
-                    {
+                    if (!actionList.isEmpty()) {
                         getStatistic().getCanalCount().addAndGet(actionList.size());
 
-                        for (AbstractAction action: actionList
-                             ) {
+                        for (AbstractAction action : actionList
+                        ) {
                             observableEmitter.onNext(action);
                         }
                     }
@@ -292,11 +300,19 @@ public class Canal implements DbFactory {
                     if (position != null)
                         observableEmitter.onNext(new ChangePositionAction(position));
 
+                } catch (InterruptedException e)
+                {
+                    break;
                 } catch (Exception e)
                 {
-                    client.rollback();
-                    observableEmitter.onError(new FatalCanalException(e));
-                    return;
+                    if (e.getCause() instanceof  InterruptedException)
+                        break;
+
+                    if (client.isStart())
+                        client.rollback();
+
+                    observableEmitter.onError(new CanalFatalException(e));
+                    break;
                 }
             }
 
