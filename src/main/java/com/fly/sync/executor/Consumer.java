@@ -118,6 +118,6 @@ public class Consumer extends AbstractLifeCycle implements Observer<List<Abstrac
     @Override
     public void onComplete() {
         disposable.dispose();
-        executor.triggerStop();
+        executor.stop();
     }
 }

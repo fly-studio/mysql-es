@@ -5,7 +5,7 @@ import com.fly.sync.exception.RelationException;
 import com.fly.sync.mysql.model.Record;
 import com.fly.sync.mysql.model.Records;
 import com.fly.sync.setting.River;
-import com.sun.istack.internal.NotNull;
+import com.sun.istack.NotNull;
 import io.reactivex.annotations.Nullable;
 
 import java.util.*;

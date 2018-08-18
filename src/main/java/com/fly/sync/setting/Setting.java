@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fly.core.io.IOUtils;
 import com.fly.core.text.json.Jsonable;
 import com.fly.sync.exception.ConfigException;
-import com.sun.istack.internal.NotNull;
+import com.sun.istack.NotNull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.slf4j.Logger;

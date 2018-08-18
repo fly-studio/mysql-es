@@ -17,7 +17,7 @@ import com.fly.sync.mysql.parser.PositionParser;
 import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.Config;
 import com.fly.sync.setting.River;
-import com.sun.istack.internal.NotNull;
+import com.sun.istack.NotNull;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;

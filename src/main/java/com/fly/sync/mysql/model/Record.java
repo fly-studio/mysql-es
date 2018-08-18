@@ -1,12 +1,11 @@
 package com.fly.sync.mysql.model;
 
-
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.setting.River;
 import com.google.common.collect.Sets;
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
+import com.sun.istack.NotNull;
+import com.sun.istack.Nullable;
 
 import java.util.*;
 

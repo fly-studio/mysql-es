@@ -10,9 +10,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.github.alexheretic</groupId>
-            <artifactId>dynamics</artifactId>
-            <version>4.0</version>
+            <groupId>com.sun.istack</groupId>
+            <artifactId>istack-commons-runtime</artifactId>
+            <version>3.0.5</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okio</groupId>

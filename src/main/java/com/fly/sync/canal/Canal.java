@@ -16,7 +16,7 @@ import com.fly.sync.mysql.model.Record;
 import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.Config;
 import com.fly.sync.setting.River;
-import com.sun.istack.internal.NotNull;
+import com.sun.istack.NotNull;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -258,9 +258,13 @@ public class Canal extends AbstractLifeCycle implements DbFactory {
         public void subscribe(ObservableEmitter<AbstractAction> observableEmitter) throws Exception {
             this.observableEmitter = observableEmitter;
 
-            while (Executor.isRunning() && isStart()) {
+            while (Executor.isRunning() && isStart() && server.getCanalInstance().getMetaManager().isStart()) {
 
-                if (getStatistic().getDumpCount().get() + getStatistic().getCanalCount().get() - getStatistic().getRecordCount().get() > config.bulkSize * 5)
+                if (getStatistic().getDumpCount().get()
+                        + getStatistic().getCanalCount().get()
+                        - getStatistic().getRecordCount().get()
+                        > config.bulkSize * 5
+                )
                 {
                     //logger.info("Canal {} and subscribe {}, sleep 0.1s", total, getRecordCount.get());
                     try {
