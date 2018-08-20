@@ -243,14 +243,14 @@ public class Record {
 
     public Map<String, Object> getModifiedItems(@NotNull String prefix)
     {
-        if (modifiedColumns.size() == items.keySet().size())
+        if (modifiedColumns.size() == items.keySet().size() && prefix.isEmpty())
             return items;
 
         Map<String, Object> newItems = new HashMap<>();
 
         for (String key: modifiedColumns
         )
-            newItems.put(prefix + key, isDeleted() ? null : get(key));
+            newItems.put(prefix + key, get(key));
 
         return newItems;
     }

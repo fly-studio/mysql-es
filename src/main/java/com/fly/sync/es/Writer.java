@@ -78,6 +78,7 @@ public class Writer implements AbstractWriter {
                     .getEs()
                     .getRestClient()
                     .performRequest("POST", table.index + "/" +table.type+ "/_update_by_query", params, entity);
+
         } catch (IOException e)
         {
             logger.error(e.getMessage(), e);
