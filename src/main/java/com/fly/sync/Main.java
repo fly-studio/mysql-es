@@ -2,6 +2,9 @@ package com.fly.sync;
 
 import com.fly.sync.executor.Executor;
 import com.fly.sync.setting.Setting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +15,7 @@ public class Main {
     public final static String DESCRIPTION = "Sync MySQL to ElasticSearch with relationship";
     public final static String VERSION = "1.0.0";
 
-    public final static Thread mainThread = Thread.currentThread();
+    private final static Thread mainThread = Thread.currentThread();
 
 
     public static void main(String[] argv) {
@@ -31,6 +34,12 @@ public class Main {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.trace("Shutdown from Runtime hook.");
+
+            if( LogManager.getContext() instanceof LoggerContext ) {
+                logger.debug("Shutting down log4j2");
+                Configurator.shutdown((LoggerContext)LogManager.getContext());
+            } else
+                logger.warn("Unable to shutdown log4j2");
 
             executor.stop();
 

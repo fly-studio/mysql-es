@@ -9,6 +9,8 @@ import com.fly.sync.setting.Setting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +25,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Executor {
 
+    public final static Logger logger = LoggerFactory.getLogger(Main.class);
+
     public enum Action {
         CONNECT,
         VALIDATE,
@@ -30,11 +34,9 @@ public class Executor {
         STOP,
         EXIT,
     }
-
     private Es es;
     private MySql mySql;
     private static AtomicBoolean running = new AtomicBoolean(false);
-    public final static Logger logger = LoggerFactory.getLogger(Main.class);
     private ExecutorService threadPool;
     private Statistic statistic = new Statistic();
     private List<Emiter> emiters = new ArrayList<>();
@@ -106,7 +108,7 @@ public class Executor {
     /**
      * 当run被调取之后，本线程（比如Main中调取就是主线程）会被阻塞直到插入EXIT到队列，
      * 如果在相同进程（比如Main中）调取stop，会发现根本无法响应，因为线程已经被阻塞根本无法执行后续代码。
-     * 所以需要另起的线程调取stop，比如：Main中使用的ShutdownHook的线程调取,Consumer也是其它线程
+     * 所以需要另起的线程调取stop，比如：Main中使用的ShutdownHook的线程调取, Observeable中使用Consumer(也在其他线程)
      */
     public synchronized void stop()
     {
@@ -158,8 +160,15 @@ public class Executor {
 
     private void doStop() {
 
-        System.out.println("try to stop.");
-        logger.trace("try to stop.");
+        boolean isLog4jEnable = false;
+
+        if( LogManager.getContext() instanceof LoggerContext)
+            isLog4jEnable = ((LoggerContext)LogManager.getContext()).isStarted();
+
+        if (!isLog4jEnable)
+            System.out.println("try to stop.");
+        else
+            logger.trace("try to stop.");
 
         threadPool.shutdown();
 
@@ -167,25 +176,33 @@ public class Executor {
         {
             running.set(false);
 
-            System.out.println("stop all consumers.");
-            logger.trace("stop all consumers.");
+            if (!isLog4jEnable)
+                System.out.println("stop all consumers.");
+            else
+                logger.trace("stop all consumers.");
             consumers.forEach(Consumer::stop);
 
-            System.out.println("stop all emiters.");
-            logger.trace("stop all emiters.");
+            if (!isLog4jEnable)
+                System.out.println("stop all emiters.");
+            else
+                logger.trace("stop all emiters.");
             emiters.forEach(Emiter::stop);
         }
         
         running.set(false);
 
         try {
-            System.out.println("waiting threads stop.");
-            logger.trace("waiting threads stop.");
+            if (!isLog4jEnable)
+                System.out.println("waiting threads stop.");
+            else
+                logger.trace("waiting threads stop.");
 
             while(!threadPool.awaitTermination(500, TimeUnit.MILLISECONDS))
             {
-                System.out.println("LOOP Waiting Rx-threads stop.");
-                logger.trace("LOOP Waiting Rx-threads stop.");
+                if (!isLog4jEnable)
+                    System.out.println("LOOP Waiting Rx-threads stop.");
+                else
+                    logger.trace("LOOP Waiting Rx-threads stop.");
             }
         } catch (InterruptedException e)
         {
@@ -193,21 +210,28 @@ public class Executor {
         }
 
         try {
-            System.out.println("close mysql.");
+            if (!isLog4jEnable)
+                System.out.println("close mysql.");
+            else
+                logger.trace("close mysql.");
 
-            logger.trace("close mysql.");
             mySql.close();
 
-            System.out.println("close elastic.");
-            logger.trace("close elastic.");
+            if (!isLog4jEnable)
+                System.out.println("close elastic.");
+            else
+                logger.trace("close elastic.");
+
             es.close();
         } catch (Exception e)
         {
 
         }
 
-        System.out.println("all stoped.");
-        logger.trace("all stoped.");
+        if (!isLog4jEnable)
+            System.out.println("all stoped.");
+        else
+            logger.trace("all stoped.");
     }
 
     public synchronized void throwException(Throwable e)

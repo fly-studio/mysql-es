@@ -1,7 +1,7 @@
 package com.fly.sync.action;
 
 import com.fly.sync.contract.AbstractAction;
-import com.fly.sync.contract.DbFactory;
+import com.fly.sync.contract.AbstractWriter;
 import com.fly.sync.executor.Statistic;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.time.DurationFormatUtils;
@@ -11,9 +11,8 @@ import org.slf4j.LoggerFactory;
 public class ReportAction implements AbstractAction {
     public final static Logger logger = LoggerFactory.getLogger(ReportAction.class);
 
-    @Override
-    public void execute(DbFactory dbFactory) {
-        Statistic statistic = dbFactory.getStatistic();
+    public void execute(AbstractWriter writer) {
+        Statistic statistic = writer.getDbFactory().getStatistic();
 
         long millis = System.currentTimeMillis()- statistic.getCreatedAt();
         String hms = DurationFormatUtils.formatDuration(millis, "d 'days' HH:mm:ss");
@@ -27,7 +26,8 @@ public class ReportAction implements AbstractAction {
                         "\t+ DML:\n" +
                         "\t\t- Insert: {}\n" +
                         "\t\t- Update: {}\n" +
-                        "\t\t- Delete: {}",
+                        "\t\t- Delete: {}\n" +
+                        "- Relate: {}",
                 FileUtils.byteCountToDisplaySize(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()),
                 hms,
                 statistic.getRecordCount(),
@@ -35,7 +35,8 @@ public class ReportAction implements AbstractAction {
                 statistic.getCanalCount(),
                 statistic.getInsertCount(),
                 statistic.getUpdateCount(),
-                statistic.getDeleteCount()
+                statistic.getDeleteCount(),
+                statistic.getRelateCount()
         );
     }
 

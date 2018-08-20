@@ -1,6 +1,7 @@
 package com.fly.sync.action;
 
 import com.fly.sync.contract.AbstractRecordAction;
+import com.fly.sync.contract.AbstractWriter;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.mysql.model.Record;
 import com.fly.sync.setting.River;
@@ -24,9 +25,8 @@ public class UpdateAction implements AbstractRecordAction {
         return new UpdateAction(record);
     }
 
-    @Override
-    public void execute(DbFactory dbFactory) {
-        dbFactory.getStatistic().getUpdateCount().incrementAndGet();
+    public void execute(AbstractWriter writer) {
+        writer.getDbFactory().getStatistic().getUpdateCount().incrementAndGet();
     }
 
     @Override

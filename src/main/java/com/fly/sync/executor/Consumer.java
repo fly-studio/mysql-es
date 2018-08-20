@@ -2,10 +2,7 @@ package com.fly.sync.executor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fly.sync.action.DeleteAction;
-import com.fly.sync.contract.AbstractAction;
-import com.fly.sync.contract.AbstractLifeCycle;
-import com.fly.sync.contract.AbstractRecordAction;
-import com.fly.sync.contract.DbFactory;
+import com.fly.sync.contract.*;
 import com.fly.sync.es.Es;
 import com.fly.sync.es.Writer;
 import com.fly.sync.mysql.MySql;
@@ -94,6 +91,7 @@ public class Consumer extends AbstractLifeCycle implements Observer<List<Abstrac
 
         getStatistic().getSubscribeCount().addAndGet(actionList.size());
         getStatistic().getRecordCount().addAndGet(actionList.stream().filter(action -> action instanceof AbstractRecordAction).count());
+        getStatistic().getRelateCount().addAndGet(actionList.stream().filter(action -> action instanceof AbstractRelateAction).count());
 
         try
         {
@@ -105,6 +103,7 @@ public class Consumer extends AbstractLifeCycle implements Observer<List<Abstrac
                 writer.execute(actionList);
             }
         } catch (Exception e) {
+            disposable.dispose();
             onError(e);
         }
     }

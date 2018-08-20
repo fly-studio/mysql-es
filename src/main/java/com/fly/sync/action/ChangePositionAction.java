@@ -1,7 +1,7 @@
 package com.fly.sync.action;
 
 import com.fly.sync.contract.AbstractAction;
-import com.fly.sync.contract.DbFactory;
+import com.fly.sync.contract.AbstractWriter;
 import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.Setting;
 import org.slf4j.Logger;
@@ -33,13 +33,13 @@ public class ChangePositionAction implements AbstractAction {
     }
 
     @Override
-    public void execute(DbFactory dbFactory) {
+    public void execute(AbstractWriter writer) {
 
         try
         {
-            Setting.binLog.set(dbFactory.getRiverDatabase().schemaName, binLogPosition);
+            Setting.binLog.set(writer.getDbFactory().getRiverDatabase().schemaName, binLogPosition);
 
-            logger.info("Write BinLog Position: {} : [{}: {}]", dbFactory.getRiverDatabase().schemaName, binLogPosition.name, binLogPosition.position);
+            logger.info("Write BinLog Position: {} : [{}: {}]", writer.getDbFactory().getRiverDatabase().schemaName, binLogPosition.name, binLogPosition.position);
 
             Setting.saveBinLog();
         } catch (Exception e)

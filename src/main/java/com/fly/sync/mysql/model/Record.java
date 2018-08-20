@@ -139,19 +139,28 @@ public class Record {
         return items.containsKey(key);
     }
 
+    public Object get(@NotNull String key, boolean includeDeleted)
+    {
+        return !includeDeleted && isDeleted() ? null : items.get(key);
+    }
+
     public Object get(@NotNull String key)
     {
-        return items.get(key);
+        return get(key, false);
     }
 
     public Object get(String relationKey, String key)
     {
         if (relationKey == null || relationKey.isEmpty())
-            return get(key);
+            return get(key, false);
 
         Record record = getRelation(relationKey);
 
-        return record == null ? null : record.get(key);
+        return record == null ? null : record.get(key, false);
+    }
+
+    public Object getWithDeleted(String key) {
+        return get(key, true);
     }
 
     public Record getRelation(@Nullable String relationKey)
@@ -232,7 +241,7 @@ public class Record {
         return relations;
     }
 
-    public Map<String, Object> getModifiedItems()
+    public Map<String, Object> getModifiedItems(@NotNull String prefix)
     {
         if (modifiedColumns.size() == items.keySet().size())
             return items;
@@ -241,19 +250,19 @@ public class Record {
 
         for (String key: modifiedColumns
         )
-            newItems.put(key, isDeleted() ? null : get(key));
+            newItems.put(prefix + key, isDeleted() ? null : get(key));
 
         return newItems;
     }
 
-    public Map<String, Object> mix(boolean nested)
+    public Map<String, Object> mix(boolean nested, @NotNull String prefix)
     {
-        Map<String, Object> newItems = getModifiedItems();
+        Map<String, Object> newItems = getModifiedItems(prefix);
 
         for (Map.Entry<String, Record> entry: relations.entrySet()
         ) {
             String relationKey = entry.getKey();
-            Map<String, Object> value = entry.getValue().mix(nested);
+            Map<String, Object> value = entry.getValue().mix(nested, prefix);
 
             if (nested)
             {
@@ -261,7 +270,7 @@ public class Record {
             } else {
                 for (Map.Entry<String, Object> entry1: value.entrySet()
                 ) {
-                    newItems.put(relationKey + River.DOT + entry1.getKey(), entry1.getValue());
+                    newItems.put(prefix + relationKey + River.DOT + entry1.getKey(), entry1.getValue());
                 }
             }
         }
@@ -271,12 +280,16 @@ public class Record {
 
     public Map<String, Object> mix()
     {
-        return mix(false);
+        return mix(false, "");
     }
 
-    public String toJson(ObjectMapper objectMapper, boolean nested) throws Exception
+    public Map<String, Object> mixWithPrefix(String prefix) {
+        return mix(false, prefix);
+    }
+
+    public String toJson(ObjectMapper objectMapper, boolean nested, String prefix) throws Exception
     {
-        Map<String, Object> mix = mix(nested);
+        Map<String, Object> mix = mix(nested, prefix);
 
         return objectMapper
                 .writeValueAsString(mix);
@@ -284,7 +297,9 @@ public class Record {
 
     public String toJson(ObjectMapper objectMapper) throws Exception
     {
-        return toJson(objectMapper, false);
+        return toJson(objectMapper, false, "");
     }
+
+
 
 }

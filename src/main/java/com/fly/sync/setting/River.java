@@ -54,6 +54,11 @@ public class River extends Jsonable {
         return tableName + NAMESPACE + String.join(DOT, relationKeys);
     }
 
+    public static String makeRelationKey(List<String> relationKeys)
+    {
+        return String.join(DOT, relationKeys);
+    }
+
     public static String makeRelationKey(String tableName, String relationKeys)
     {
         return tableName + NAMESPACE + relationKeys;
@@ -458,6 +463,10 @@ public class River extends Jsonable {
             }
 
             return -1;
+        }
+
+        public Relation getRelation(int offset) {
+            return nestedRelations.get(offset);
         }
     }
 }

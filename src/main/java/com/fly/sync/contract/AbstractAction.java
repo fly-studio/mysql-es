@@ -4,6 +4,6 @@ import java.io.Serializable;
 
 public interface AbstractAction extends Serializable {
 
-    void execute(DbFactory dbFactory);
+    void execute(AbstractWriter writer);
     String getGroup();
 }

@@ -128,7 +128,7 @@ public class RelationRecords {
         ) {
 
             // If record is deleted, add a nullRecord to relations
-            Object val = record.isDeleted() ? null : record.get(relation.local);
+            Object val = record.get(relation.local);
 
             if (val == null || relationRecords == null) {
 
@@ -172,7 +172,7 @@ public class RelationRecords {
         for (Record record: originalRecords
         ) {
             // If record is deleted, return a null to localValues
-            Object object = record.isDeleted() ? null : record.get(relation.local);
+            Object object = record.get(relation.local);
             if (object == null)
                 continue;
 

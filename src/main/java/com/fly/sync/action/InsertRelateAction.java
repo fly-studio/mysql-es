@@ -1,13 +1,13 @@
 package com.fly.sync.action;
 
-import com.fly.sync.contract.AbstractRecordAction;
 import com.fly.sync.contract.AbstractRelateAction;
+import com.fly.sync.contract.AbstractWriter;
 import com.fly.sync.contract.DbFactory;
 import com.fly.sync.mysql.model.Record;
 import com.fly.sync.setting.River;
 import org.elasticsearch.action.DocWriteRequest;
 
-public class InsertRelateAction implements AbstractRecordAction, AbstractRelateAction {
+public class InsertRelateAction implements AbstractRelateAction {
 
     private Record record;
     private River.Associate associate;
@@ -32,8 +32,8 @@ public class InsertRelateAction implements AbstractRecordAction, AbstractRelateA
     }
 
     @Override
-    public void execute(DbFactory dbFactory) {
-
+    public void execute(AbstractWriter writer) {
+        writer.updateByQuery(this);
     }
 
     @Override
@@ -45,4 +45,5 @@ public class InsertRelateAction implements AbstractRecordAction, AbstractRelateA
     public River.Associate getAssociate() {
         return associate;
     }
+
 }

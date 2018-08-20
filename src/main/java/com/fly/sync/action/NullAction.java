@@ -2,13 +2,12 @@ package com.fly.sync.action;
 
 
 import com.fly.sync.contract.AbstractAction;
-import com.fly.sync.contract.DbFactory;
+import com.fly.sync.contract.AbstractWriter;
 import io.reactivex.annotations.Nullable;
 
 public class NullAction implements AbstractAction {
 
-    @Override
-    public void execute(DbFactory dbFactory) {
+    public void execute(AbstractWriter writer) {
 
     }
 
