@@ -1,6 +1,8 @@
 # MySQL - ElasticSearch Synchronization
 
-A No-Lose data's synchronization tool, Supported **One-to-One Relation**, Read and parse bin-log to sync, base on [alibaba/canal](https://github.com/alibaba/canal), [RxJava](https://github.com/ReactiveX/RxJava).
+A MySQL-ElasticSearch synchronization tool with **Real-Time**, **No-Lose**, **One-to-One Relation**.
+
+base on [alibaba/canal](https://github.com/alibaba/canal), [RxJava](https://github.com/ReactiveX/RxJava).
 
 > The Canal is a bin-log parser and subscriber of alibaba
 
@@ -28,37 +30,31 @@ A No-Lose data's synchronization tool, Supported **One-to-One Relation**, Read a
 
 - supported ElasticSearch 5.x ~ 6.x.
 
-- supported No-bin-log MySQL Before.
+- supported **Non-bin-log** MySQL **Before**.
 
-    If your MySQL did not enable the bin-log before, NO PROBLEM.
-
-    Enable it now, And this tool will sync the history via "mysqldump"
+    If MySQL did not enable the bin-log before, NO PROBLEM.
 
     See [How to work](#how-to-work).
 
 - supported One-to-One relation.
 
-    - **users-table**:  | id | nickname | xxx |
+    - Original tables
 
-    - **posts-table**:  | id | user_id | title | content |
+        - **users-table**:  | id | nickname | xxx |
 
-        this tool can add the "users-table"'s related record to the "posts-ES-index"'s, like this:
+        - **posts-table**:  | id | user_id | title | content |
 
-    - **posts-ES-index**:  | id | user_id | user.id | user.nickname | user.xxx | title | content |
+    - Use a simple settings to synchronize them all, like:
 
-        When "users-table"'s record were modified,  "posts-ES-index" will synchronizing the related record.
+        **posts-ES-index**:  | id | user_id | user.id | user.nickname | user.xxx | title | content |
 
     See [Relation](docs/relation.md).
 
-- use bin-log to synchronize the record in **REAL-TIME**
+- parsing the bin-log's records to synchronize in **REAL-TIME**, include Create / Update / Delete operations
 
-    Base on cannal, but you do not need via other canal setting, this tool set it automation.
-
-- supported synchronize the Create / Update / Delete operations in MySQL in **REAL-TIME**
+- synchronize the relation records in **REAL-TIME**, Also after them modified.
 
 - supported multiple primary keys.
-
-- synchronize the partial columns If you want.
 
 ## How to work
 
@@ -68,27 +64,24 @@ This tools contains two parts:
 
     - Whether the MySQL enable the bin-log or not, before, enable it now.
 
-    - This tool will "mysqldump" the history data and synchronize them to Elastic.
+    - Launch "mysqldump", dump the history data and synchronize them to Elastic.
 
     - Because "mysqldump" will returning a new bin-log position for saving.
 
     > 1. If exists a position file, it'll skiping the dumper.
-    > 2. if MySQL do not enable the bin-log, it'll not return a position.
+    > 2. if MySQL do not enable the bin-log, "mysqldump" will not return a position.
 
 2. Parse the Real-time bin-log data via Canal
 
     - Dump complete or exists a bin-log position file.
 
-    - Tool launch the canal with the position.
+    - Launch the canal with the position.
 
     - Loop executing:
 
-        1. Then parse and synchronize the data from bin-log in Real-Time.
+        1. parse and synchronize the records from bin-log in Real-Time.
 
         2. Save the newest bin-log position after synchronized
-
-
-
 
 ## Known issue
 
@@ -100,16 +93,17 @@ This tools contains two parts:
 
 - If a column had be added / droped / modified, cannot synchronize.
 
-- If you modify the settings of tables or relations, cannot synchronize
+- If the settings of tables or relations had be modified, cannot synchronize
 
 ## Todo
 
 We will Support these features like:
 
-- Alter Table's column (ADD / DROP / MODIFY)
-- Modify the primary key
-- Modify the relation's primary key
-- Column alias
+- Synchronize when Alter table's column (`ADD` / `DROP` / `MODIFY`)
+- Synchronize when the primary key modified
+- Synchronize when the relation's primary key modified
+- Synchronize the *Partial* columns that you want.
+- Column *alias*
 
 ## Copyright and License
 
