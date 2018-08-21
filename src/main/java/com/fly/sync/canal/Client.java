@@ -13,17 +13,19 @@ import com.alibaba.otter.canal.store.model.Event;
 import com.alibaba.otter.canal.store.model.Events;
 import com.fly.sync.contract.AbstractLifeCycle;
 import com.google.common.collect.Lists;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
+/**
+ * Code from com.alibaba.otter.canal.server.embedded.CanalServerWithEmbedded
+ */
 public class Client extends AbstractLifeCycle {
 
     public final static Logger logger = LoggerFactory.getLogger(Client.class);
@@ -84,7 +86,7 @@ public class Client extends AbstractLifeCycle {
         checkSubscribe();
 
         Map<Long, PositionRange> batchs = canalInstance.getMetaManager().listAllBatchs(clientIdentity);
-        List<Long> result = new ArrayList<>(batchs.keySet());
+        List<Long> result = new ArrayList<Long>(batchs.keySet());
         Collections.sort(result);
         return result;
     }
@@ -93,9 +95,13 @@ public class Client extends AbstractLifeCycle {
     {
         checkStart();
 
-        canalInstance.getMetaManager().subscribe(clientIdentity); // 执行一下meta订阅
-        Position position = canalInstance.getMetaManager().getCursor(clientIdentity);
+        if (!canalInstance.getMetaManager().isStart()) {
+            canalInstance.getMetaManager().start();
+        }
 
+        canalInstance.getMetaManager().subscribe(clientIdentity); // 执行一下meta订阅
+
+        Position position = canalInstance.getMetaManager().getCursor(clientIdentity);
         if (position == null) {
             position = canalInstance.getEventStore().getFirstPosition();// 获取一下store中的第一条
             if (position != null) {
@@ -106,6 +112,7 @@ public class Client extends AbstractLifeCycle {
             logger.info("subscribe successfully, use last cursor position:{} ", clientIdentity, position);
         }
 
+        // 通知下订阅关系变化
         canalInstance.subscribeChange(clientIdentity);
     }
 
@@ -149,33 +156,47 @@ public class Client extends AbstractLifeCycle {
         synchronized (canalInstance) {
             // 获取到流式数据中的最后一批获取的位置
             PositionRange<LogPosition> positionRanges = canalInstance.getMetaManager().getLastestBatch(clientIdentity);
+
             if (positionRanges != null) {
                 throw new CanalServerException(String.format("clientId:%s has last batch:[%s] isn't ack , maybe loss data",
                         clientIdentity.getClientId(),
                         positionRanges));
             }
+
             Events<Event> events = null;
             Position start = canalInstance.getMetaManager().getCursor(clientIdentity);
             events = getEvents(canalInstance.getEventStore(), start, batchSize, timeout, unit);
 
             if (CollectionUtils.isEmpty(events.getEvents())) {
-                logger.trace("get successfully, clientId:{} batchSize:{} but result is null", new Object[] {
-                        clientIdentity.getClientId(), batchSize });
-                return new Message(-1, new ArrayList<CanalEntry.Entry>()); // 返回空包，避免生成batchId，浪费性能
+                /*logger.trace("get successfully, clientId:{} batchSize:{} but result is null",
+                        clientIdentity.getClientId(),
+                        batchSize);*/
+                return new Message(-1, true, new ArrayList()); // 返回空包，避免生成batchId，浪费性能
             } else {
                 // 记录到流式信息
                 Long batchId = canalInstance.getMetaManager().addBatch(clientIdentity, events.getPositionRange());
-                List<CanalEntry.Entry> entrys = Lists.transform(events.getEvents(), input -> input.getEntry());
-
-                logger.info("get successfully, clientId:{} batchSize:{} real size is {} and result is [batchId:{} , position:{}]",
-                        clientIdentity.getClientId(),
-                        batchSize,
-                        entrys.size(),
-                        batchId,
-                        events.getPositionRange());
+                List<CanalEntry.Entry> entrys = Lists.transform(events.getEvents(), input -> {
+                    try {
+                        return CanalEntry.Entry.parseFrom(input.getRawEntry());
+                    } catch (InvalidProtocolBufferException e)
+                    {
+                        return null;
+                    }
+                })
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                if (logger.isInfoEnabled()) {
+                    logger.trace("get successfully, clientId:{} batchSize:{} real size is {} and result is [batchId:{} , position:{}]",
+                            clientIdentity.getClientId(),
+                            batchSize,
+                            entrys.size(),
+                            batchId,
+                            events.getPositionRange());
+                }
                 // 直接提交ack
                 ack(batchId);
-                return new Message(batchId, entrys);
+                return new Message(batchId, false, entrys);
             }
         }
     }
@@ -208,6 +229,7 @@ public class Client extends AbstractLifeCycle {
      */
     public Message getWithoutAck(int batchSize, Long timeout, TimeUnit unit)
             throws CanalServerException {
+
         checkStart();
         checkSubscribe();
 
@@ -228,21 +250,33 @@ public class Client extends AbstractLifeCycle {
             }
 
             if (CollectionUtils.isEmpty(events.getEvents())) {
-                logger.trace("getWithoutAck successfully, clientId:{} batchSize:{} but result is null", new Object[] {
-                        clientIdentity.getClientId(), batchSize });
-                return new Message(-1, new ArrayList<CanalEntry.Entry>()); // 返回空包，避免生成batchId，浪费性能
+                /*logger.trace("getWithoutAck successfully, clientId:{} batchSize:{} but result is null",
+                        clientIdentity.getClientId(),
+                        batchSize);*/
+                return new Message(-1, true, new ArrayList()); // 返回空包，避免生成batchId，浪费性能
             } else {
                 // 记录到流式信息
                 Long batchId = canalInstance.getMetaManager().addBatch(clientIdentity, events.getPositionRange());
-                List<CanalEntry.Entry> entrys = Lists.transform(events.getEvents(),  input -> input.getEntry());
-
-                logger.trace("getWithoutAck successfully, clientId:{} batchSize:{}  real size is {} and result is [batchId:{} , position:{}]",
-                        clientIdentity.getClientId(),
-                        batchSize,
-                        entrys.size(),
-                        batchId,
-                        events.getPositionRange());
-                return new Message(batchId, entrys);
+                List<CanalEntry.Entry> entrys = Lists.transform(events.getEvents(), input -> {
+                    try {
+                        return CanalEntry.Entry.parseFrom(input.getRawEntry());
+                    } catch (InvalidProtocolBufferException e)
+                    {
+                        return null;
+                    }
+                })
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+                if (logger.isInfoEnabled()) {
+                    logger.trace("getWithoutAck successfully, clientId:{} batchSize:{}  real size is {} and result is [batchId:{} , position:{}]",
+                            clientIdentity.getClientId(),
+                            batchSize,
+                            entrys.size(),
+                            batchId,
+                            events.getPositionRange());
+                }
+                return new Message(batchId, false, entrys);
             }
 
         }
@@ -287,10 +321,12 @@ public class Client extends AbstractLifeCycle {
         // 更新cursor
         if (positionRanges.getAck() != null) {
             canalInstance.getMetaManager().updateCursor(clientIdentity, positionRanges.getAck());
-            logger.trace("ack successfully, clientId:{} batchId:{} position:{}",
-                    clientIdentity.getClientId(),
-                    batchId,
-                    positionRanges);
+            if (logger.isInfoEnabled()) {
+                logger.trace("ack successfully, clientId:{} batchId:{} position:{}",
+                        clientIdentity.getClientId(),
+                        batchId,
+                        positionRanges);
+            }
         }
 
         // 可定时清理数据

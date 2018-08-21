@@ -45,6 +45,6 @@ public class UpdateAction implements AbstractRecordAction {
 
     @Override
     public String getGroup() {
-        return UpdateAction.class.getName();
+        return AbstractRecordAction.class.getName();
     }
 }

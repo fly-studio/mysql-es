@@ -26,10 +26,13 @@
         </RollingFile>
     </Appenders>
     <Loggers>
-        <Root level="trace" >
+        <Logger name="com.fly">
             <AppenderRef ref="Console" level="trace" />
             <AppenderRef ref="fileLogger" level="info" />
             <AppenderRef ref="errorLogger" level="error" />
+        </Logger>
+        <Root level="trace" >
+
         </Root>
     </Loggers>
 </Configuration>
