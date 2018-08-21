@@ -252,7 +252,13 @@ public class Dumper extends AbstractLifeCycle implements DbFactory {
                     if (getStatistic().getDumpCount().get() - getStatistic().getRecordCount().get() > config.bulkSize * 5)
                     {
                         //logger.info("Dump {} and subscribe {}, sleep 0.1s", total, getRecordCount.get());
-                        Thread.sleep(100);
+                        try {
+
+                            Thread.sleep(100);
+                        } catch (InterruptedException e)
+                        {
+                            break;
+                        }
                         continue;
                     }
 
