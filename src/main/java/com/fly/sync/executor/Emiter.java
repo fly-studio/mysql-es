@@ -1,7 +1,6 @@
 package com.fly.sync.executor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fly.sync.Main;
 import com.fly.sync.action.ReportAction;
 import com.fly.sync.canal.Canal;
 import com.fly.sync.contract.AbstractAction;
@@ -162,7 +161,7 @@ public class Emiter extends AbstractLifeCycle implements DbFactory {
                 }
             }
 
-            emitter.onNext(Main.NAME);
+            emitter.onNext("Complete");
             emitter.onComplete();
 
         }).flatMap(nothing -> {

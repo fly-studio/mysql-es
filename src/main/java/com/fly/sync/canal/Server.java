@@ -10,7 +10,6 @@ import com.alibaba.otter.canal.parse.index.CanalLogPositionManager;
 import com.alibaba.otter.canal.protocol.position.LogPosition;
 import com.fly.core.database.SqlUtils;
 import com.fly.core.text.RegexUtils;
-import com.fly.sync.Main;
 import com.fly.sync.contract.AbstractLifeCycle;
 import com.fly.sync.setting.BinLog;
 import com.fly.sync.setting.River;
@@ -124,7 +123,6 @@ public class Server extends AbstractLifeCycle {
             canal.setGmtCreate(new Date());
             canal.setGmtModified(new Date());
             canal.setName(database.schemaName);
-            canal.setDesc(Main.DESCRIPTION);
             canal.setStatus(CanalStatus.STOP);
             canal.setCanalParameter(buildCanalParameter(river, database, position));
 
