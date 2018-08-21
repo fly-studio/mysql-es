@@ -45,7 +45,9 @@ public class Writer implements AbstractWriter {
         params.put("conflicts", "proceed");
 
         int offset = associate.findOffset(record.table);
-        if (offset <= 0) // == 0 is a sync-table, not a relation
+        // == 0 is a sync-table, not a relation
+        // why sync-table is in this method?
+        if (offset <= 0)
             return;
 
         River.Relation relation = associate.getRelation(offset - 1);
