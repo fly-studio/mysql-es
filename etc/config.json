@@ -1,5 +1,5 @@
 {
-  // master.info's path
+  // binlog.json's path
   "data_dir": "./data",
   // log's path
   "log_dir": "./logs",

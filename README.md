@@ -10,7 +10,6 @@ base on [alibaba/canal](https://github.com/alibaba/canal), [RxJava](https://gith
 
 - 1.0-beta : 2018-08-21
 
-
 ## Manuals
 
 - [Install and launch](docs/install.md)
@@ -37,14 +36,13 @@ base on [alibaba/canal](https://github.com/alibaba/canal), [RxJava](https://gith
     See [How to work](#how-to-work).
 
 - supported One-to-One relation.
+  - Original tables
 
-    - Original tables
+    - **users-table**:  | id | nickname | xxx |
 
-        - **users-table**:  | id | nickname | xxx |
+    - **posts-table**:  | id | user_id | title | content |
 
-        - **posts-table**:  | id | user_id | title | content |
-
-    - Use a simple settings to synchronize them all, like:
+  - Use a simple settings to synchronize them all, like:
 
         **posts-ES-index**:  | id | user_id | user.id | user.nickname | user.xxx | title | content |
 
@@ -55,6 +53,8 @@ base on [alibaba/canal](https://github.com/alibaba/canal), [RxJava](https://gith
 - synchronize the relation records in **REAL-TIME**, Also after them modified.
 
 - supported multiple primary keys.
+
+- Backup bin-log position's file
 
 ## How to work
 

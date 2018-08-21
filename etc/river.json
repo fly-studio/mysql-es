@@ -48,7 +48,7 @@
           "template" : "",
           // SimpleDateFormat
           "date_format": "yyyy-MM-dd'T'HH:mm:ss.SSSZZ",
-          // What Primary key, default: ["pk"]
+          // What Primary key, default: ["id"]
           "pk" : ["id"],
           // What columnNames you wanna sync to this index, default: ["*"]
           "columns": ["*"],
@@ -68,19 +68,19 @@
          * @Example: relations
          *
          */
-        // | pk | nickname |
+        // | id | nickname |
         "users" : {
           "index": "${SCHEMA}-${TABLE}",
           "relations" : {
             "extra": {
-              // | pk | city |
+              // | id | city |
               "table": "user_infos", // Which table do "users" relate
               "foreign": "id", // Which column in "user_infos"
               "local": "id" //Which column in "user"
             }
           }
         },
-        // | pk | uid | content |
+        // | id | uid | content |
         "comments": {
           "index": "${SCHEMA}-${TABLE}",
           "relations" : {
@@ -95,7 +95,7 @@
             }
           },
           // It'll add these columnNames to this index
-          // | pk | uid | content | user.pk | user.nickname | user.extra.pk | user.extra.city |
+          // | id | uid | content | user.id | user.nickname | user.extra.id | user.extra.city |
           "withs": [
             "user",
             "user.extra"

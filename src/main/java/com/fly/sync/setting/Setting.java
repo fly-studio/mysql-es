@@ -139,7 +139,6 @@ public class Setting {
             throw new ConfigException("\"" + RIVER_FILE + "\" JSON format ERROR.", e);
         }
 
-
         Setting.river = river;
         return river;
     }
@@ -182,8 +181,20 @@ public class Setting {
         {
             File file = new File(config.dataDir, BINLOG_FILE);
 
+            String backupJson = null;
+
             if (!file.exists())
                 file.createNewFile();
+            else
+                backupJson = IOUtils.readUtf8(file);
+
+            File backup = new File(file.getAbsolutePath() + ".log");
+
+            if (!backup.exists())
+                 backup.createNewFile();
+
+            if (backupJson != null)
+                IOUtils.appendUtf8(backup, backupJson + "\n");
 
             String json = binLog.toJson();
             if (json == null || json.length() <= 10 || json.charAt(0) != '{' || json.charAt(json.length() - 1) != '}') {
@@ -195,9 +206,7 @@ public class Setting {
 
             logger.info("BinLog write success.");
         }
-
     }
-
 
     public static void readSettings() throws Exception
     {

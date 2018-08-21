@@ -1,4 +1,5 @@
-// It's sample json, The application will write this file to dataDir
+// It's example json
+// The application will write this file into setting.json@data_dir
 {
   "db_name": {
     "name": "",

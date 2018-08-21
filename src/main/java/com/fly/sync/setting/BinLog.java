@@ -4,11 +4,19 @@ import com.alibaba.otter.canal.protocol.position.LogPosition;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fly.core.text.json.Jsonable;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 public class BinLog extends Jsonable {
     public Map<String, Position> lists = new HashMap<>();
+
+    public String getTimestamp()
+    {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
+        return simpleDateFormat.format(System.currentTimeMillis());
+    }
 
     public boolean isEmpty(String db)
     {
