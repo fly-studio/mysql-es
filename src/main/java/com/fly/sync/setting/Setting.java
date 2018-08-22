@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 
 public class Setting {
 
@@ -188,7 +189,7 @@ public class Setting {
             else
                 backupJson = IOUtils.readUtf8(file);
 
-            File backup = new File(file.getAbsolutePath() + ".log");
+            File backup = new File(file.getAbsolutePath() + "."+ new SimpleDateFormat("yyyy-MM-dd").format(System.currentTimeMillis()) +".log");
 
             if (!backup.exists())
                  backup.createNewFile();

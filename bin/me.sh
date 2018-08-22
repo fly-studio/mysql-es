@@ -20,7 +20,7 @@ BASE=${bin_abs_path}/..
 RUNNING_USER=root
 CONF=$BASE/conf
 APP_MAINCLASS=com.fly.sync.Main
-JAVA_OPTS=" -Djava.awt.headless=true -XX:MaxPermSize=128m -Dme.etc.path=$CONF"
+JAVA_OPTS=" -Djava.awt.headless=true -XX:MaxPermSize=512m -Dme.etc.path=$CONF"
 CLASSPATH=$BASE/lib
 
 # Loop for lib/*.jar
