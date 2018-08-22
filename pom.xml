@@ -6,7 +6,7 @@
 
     <groupId>com.fly.sync</groupId>
     <artifactId>mysql_es</artifactId>
-    <version>1.0-beta</version>
+    <version>1.0.0-beta1</version>
 
     <developers>
         <developer>
