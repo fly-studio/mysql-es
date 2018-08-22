@@ -22,6 +22,7 @@ CONF=$BASE/conf
 APP_MAINCLASS=com.fly.sync.Main
 JAVA_OPTS=" -Djava.awt.headless=true -XX:MaxPermSize=512m -Dme.etc.path=$CONF"
 CLASSPATH=$BASE/lib
+PIDFILE=$BASE/run.pid
 
 # Loop for lib/*.jar
 for i in "$BASE"/lib/*.jar; do
@@ -29,11 +30,20 @@ for i in "$BASE"/lib/*.jar; do
 done
 
 ## Get java path
-if [ -z "$JAVA" ] ; then
-  JAVA=$(which java)
+if [ -x "$JAVA_HOME/bin/java" ]; then
+  JAVA="$JAVA_HOME/bin/java"
+else
+  set +e
+  JAVA=`which java`
+  set -e
 fi
-if [ -z "$JPS" ] ; then
-  JPS=$(which jps)
+
+if [ -x "$JAVA_HOME/bin/jps" ]; then
+  JPS="$JAVA_HOME/bin/jps"
+else
+  set +e
+  JPS=`which jps`
+  set -e
 fi
 
 if [ -z "$JAVA" ] ; then
@@ -41,22 +51,27 @@ if [ -z "$JAVA" ] ; then
   exit 1
 fi
 
-if [ -z "$JPS" ] ; then
-  echo "Cannot find a Java Devel. Please install java-devel." 2>&2
-  JPS=$(which jps)
-fi
-
 psid=0
 
 checkpid() {
 
-   javaps=`$JPS -l | grep $APP_MAINCLASS`
+  if [ -z "$JPS" ]; then
 
-   if [ -n "$javaps" ]; then
-      psid=`echo $javaps | awk '{print $1}'`
-   else
+    if [ -e "$PIDFILE" ]; then
+      psid=`cat "$PIDFILE"`
+    else
       psid=0
-   fi
+    fi
+	echo $psid
+  else
+    javaps=`$JPS -l | grep $APP_MAINCLASS`
+
+    if [ -n "$javaps" ]; then
+      psid=`echo $javaps | awk '{print $1}'`
+    else
+      psid=0
+    fi
+  fi
 }
 
 start() {
@@ -68,9 +83,10 @@ start() {
       echo "================================"
    else
       echo -n "Starting $APP_MAINCLASS ..."
-      JAVA_CMD="$JAVA $JAVA_OPTS -classpath $CLASSPATH $APP_MAINCLASS >/dev/null 2>&1 &"
-      echo $JAVA_CMD
-      su - $RUNNING_USER -c "$JAVA_CMD"
+      nohup $JAVA $JAVA_OPTS -classpath $CLASSPATH $APP_MAINCLASS >/dev/null 2>&1 &
+      psid=$!
+      echo $psid > "$PIDFILE"
+
       checkpid
       if [ $psid -ne 0 ]; then
          echo "(pid=$psid) [OK]"
@@ -85,7 +101,9 @@ stop() {
 
    if [ $psid -ne 0 ]; then
       echo -n "Stopping $APP_MAINCLASS ...(pid=$psid) "
-      su - $RUNNING_USER -c "kill -15 $psid"
+      kill -15 $psid
+	  rm -rf "$PIDFILE"
+
       if [ $? -eq 0 ]; then
          echo "[OK]"
       else

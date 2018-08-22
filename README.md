@@ -29,9 +29,11 @@ base on [alibaba/canal](https://github.com/alibaba/canal), [RxJava](https://gith
 
 - supported ElasticSearch 5.x ~ 6.x.
 
-- supported **Non-bin-log** MySQL **Before**.
+- supported **No-enable-bin-log** MySQL **before**.
 
-    If MySQL did not enable the bin-log before, NO PROBLEM.
+    If MySQL did not enabled the bin-log before, NO PROBLEM, enable it NOW.
+
+    this tool will dumping the history data via "mysqldump".
 
     See [How to work](#how-to-work).
 
@@ -58,22 +60,26 @@ base on [alibaba/canal](https://github.com/alibaba/canal), [RxJava](https://gith
 
 ## How to work
 
-This tools contains two parts:
+This tool launchs following these process:
 
-1. Dump the history data via "mysqldump"
+1. Read Config
 
-    - Whether the MySQL enable the bin-log or not, before, enable it now.
 
-    - Launch "mysqldump", dump the history data and synchronize them to Elastic.
+2. Read Bin-log's position file.
 
-    - Because "mysqldump" will returning a new bin-log position for saving.
+    If file exists and the last position exists, skip dump.
 
-    > 1. If exists a position file, it'll skiping the dumper.
-    > 2. if MySQL do not enable the bin-log, "mysqldump" will not return a position.
+3. Dump the history data via "mysqldump" If the position was not setted.
 
-2. Parse the Real-time bin-log data via Canal
+    - Launch "mysqldump", dump all data to synchronize them to Elastic.
 
-    - Dump complete or exists a bin-log position file.
+    - And "mysqldump" will returning a new bin-log position when MySQL enabled the bin-log.
+
+    > If MySQL do not enable the bin-log, "mysqldump" will not return a position.
+
+    - Dump complete, Goto canal.
+
+4. Parse the Real-time bin-log via "Canal"
 
     - Launch the canal with the position.
 
