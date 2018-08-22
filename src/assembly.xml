@@ -1,20 +1,33 @@
 <assembly>
-    <id>package</id>
+    <id>release</id>
     <formats>
         <format>zip</format>
     </formats>
     <baseDirectory>mysql_es</baseDirectory>
     <includeBaseDirectory>true</includeBaseDirectory>
-    <dependencySets>
+    <!-- Why it <scope>runtime</scope> include com.google.guava:guava:21.0 ??? -->
+    <!-- <dependencySets>
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
             <scope>runtime</scope>
         </dependencySet>
-    </dependencySets>
+    </dependencySets>-->
     <fileSets>
         <fileSet>
             <directory>etc</directory>
             <outputDirectory>conf</outputDirectory>
+        </fileSet>
+        <!--instead of <scope>runtime</scope>, manual include -->
+        <fileSet>
+            <directory>${project.build.directory}/lib</directory>
+            <outputDirectory>lib</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}</directory>
+            <includes>
+                <include>${project.artifactId}-${project.version}.${project.packaging}</include>
+            </includes>
+            <outputDirectory>lib</outputDirectory>
         </fileSet>
         <fileSet>
             <directory>bin</directory>

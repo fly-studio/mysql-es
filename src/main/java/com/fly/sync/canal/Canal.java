@@ -62,6 +62,7 @@ public class Canal extends AbstractLifeCycle implements DbFactory {
     public void start() {
         super.start();
 
+        logger.info("Start Canal Server/Client.");
         server.start();
         client.start();
 
