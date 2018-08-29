@@ -1,17 +1,12 @@
-<assembly>
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
     <id>release</id>
     <formats>
         <format>zip</format>
     </formats>
     <baseDirectory>mysql_es</baseDirectory>
     <includeBaseDirectory>true</includeBaseDirectory>
-    <!-- Why it <scope>runtime</scope> include com.google.guava:guava:21.0 ??? -->
-    <!-- <dependencySets>
-        <dependencySet>
-            <outputDirectory>lib</outputDirectory>
-            <scope>runtime</scope>
-        </dependencySet>
-    </dependencySets>-->
     <fileSets>
         <fileSet>
             <directory>etc</directory>

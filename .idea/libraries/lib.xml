@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="lib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../java/core/target/lib/jackson-annotations-2.9.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../java/core/target/lib/jackson-core-2.9.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../java/core/target/lib/okio-1.15.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../java/core/target/lib/jackson-databind-2.9.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../java/core/target/lib/istack-commons-runtime-3.0.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

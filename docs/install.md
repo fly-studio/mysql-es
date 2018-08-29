@@ -35,12 +35,23 @@ FLUSH PRIVILEGES;
 
 ## Jre
 
-Java 1.7+
+Java 1.8+
 
 CentOS/Redhat
 
 ```sh
 yum install java java-devel
+```
+
+Fedora
+
+```sh
+dnf -y install \
+    unzip \
+    git \
+    java-1.8.0-openjdk \
+    java-1.8.0-openjdk-devel \
+    ncurses-compat-libs
 ```
 
 
