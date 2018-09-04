@@ -188,12 +188,12 @@ public class Record {
     public String getID(River.Table table)
     {
         if (table.pk.size() == 1)
-            return get(table.pk.get(0)).toString();
+            return getWithDeleted(table.pk.get(0)).toString();
 
         StringJoiner sj = new StringJoiner(":");
         for (String key: table.pk
              ) {
-            sj.add(get(key).toString());
+            sj.add(getWithDeleted(key).toString());
         }
 
         return sj.toString();
