@@ -43,6 +43,8 @@ public class Writer implements AbstractWriter {
         River.Table table = dbFactory.getRiverDatabase().getTable(associate.calledTable.tableName);
         Map<String, String> params = new HashMap<>();
         params.put("conflicts", "proceed");
+        params.put("refresh", "false");
+        params.put("wait_for_completion", "false");
 
         int offset = associate.findOffset(record.table);
         // == 0 is a sync-table, not a relation
