@@ -5,6 +5,8 @@
 ### Enable MySQL binlog
 
 > Warning: Computer must have enough free space for enabling bin-log.
+>
+> Don't worry about your historical data, this tool could sync these via other way.
 
 `binlog_format` AND `binlog_row_image` are very important，MUST be `ROW` and `FULL`:
 
@@ -14,8 +16,7 @@ binlog_format=ROW
 binlog_row_image=FULL
 explicit_defaults_for_timestamp=true
 log-slave-updates=1
-; 在BinLog打开的时候需要设置一个ID，集群内唯一，1001之后的数字已经被本工具使用
-; MUST set a server-id, the tool used the 1001+ for slave-id
+; MUST set a server-id, this tool used the 1001+ for slave-id
 server-id=1
 ```
 
@@ -47,11 +48,8 @@ Fedora
 
 ```sh
 dnf -y install \
-    unzip \
-    git \
     java-1.8.0-openjdk \
-    java-1.8.0-openjdk-devel \
-    ncurses-compat-libs
+    java-1.8.0-openjdk-devel
 ```
 
 
@@ -74,6 +72,8 @@ dnf -y install \
 1. Add `X` permission to file: `chmod +x bin/me.sh`,
 
 2. `bin/me.sh start`
+
+3. all usages:
 
 ```sh
 bin/me.sh start|stop|restart|info|status

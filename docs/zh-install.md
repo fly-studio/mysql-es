@@ -17,11 +17,10 @@ binlog_row_image=FULL
 explicit_defaults_for_timestamp=true
 log-slave-updates=1
 ; 在BinLog打开的时候需要设置一个ID，集群内唯一，1001之后的数字已经被本工具使用
-; MUST set a server-id, the tool used the 1001+ for slave-id
 server-id=1
 ```
 
-### MySQL 用户
+### 创建 MySQL 用户
 
 这个MySQL的用户必须拥有如下权限:
 
@@ -50,14 +49,11 @@ Fedora
 ```sh
 dnf -y install \
     unzip \
-    git \
     java-1.8.0-openjdk \
-    java-1.8.0-openjdk-devel \
-    ncurses-compat-libs
+    java-1.8.0-openjdk-devel
 ```
 
-
-## 狭隘 & 安装
+## 下载 & 安装
 
 1. 到 [release](https://github.com/fly-studio/mysql-es/releases) 页面下载最新的稳定版本
 
