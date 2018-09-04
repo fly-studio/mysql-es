@@ -8,20 +8,22 @@ base on [alibaba/canal](https://github.com/alibaba/canal), [RxJava](https://gith
 
 ## Version
 
-- 1.0-beta : 2018-08-21
+- 1.0-beta : 2018-09-04
 
 ## Manuals
 
 - [Install and launch](docs/install.md)
 - [Settings](docs/settings.md)
-- [Relation](docs/relation.md)
+- [One-to-One Relation](docs/relation.md)
 - [Errors](docs/error.md)
 - [For developer](docs/developer.md)
+
+[中文手册](zh-README.md)，请点击这里
 
 ## Requirements
 
 - Java 1.8 +
-- 4 GB Memory +
+- 2 GB Memory +
 - 2 Core CPU +
 - 100M Free space (for logs)
 
@@ -46,7 +48,7 @@ base on [alibaba/canal](https://github.com/alibaba/canal), [RxJava](https://gith
 
   - Use a simple settings to synchronize them all, like:
 
-        **posts-ES-index**:  | id | user_id | user.id | user.nickname | user.xxx | title | content |
+    - **posts-ES-index**:  | id | user_id | user.id | user.nickname | user.xxx | title | content |
 
     See [Relation](docs/relation.md).
 
@@ -110,6 +112,32 @@ We will Support these features like:
 - Synchronize when the relation's primary key modified
 - Synchronize the *Partial* columns that you want.
 - Column *alias*
+
+## Similar software
+
+### Mysql -> Elastic Search
+
+- [go-mysql-elasticsearch](https://github.com/siddontang/go-mysql-elasticsearch) [CN]
+
+    A Golang program.
+
+- [elasticsearch-jdbc](https://github.com/jprante/elasticsearch-jdbc)
+
+- [elasticsearch-river-mysql](https://github.com/scharron/elasticsearch-river-mysql)
+
+### MySQL(or Oracle) -> Other Driver(include ElasticSearch)
+
+- [DataX](https://github.com/alibaba/DataX) [CN]
+
+  A multi-driver synchronization tool, by alibaba. base on canal.
+    
+- [tungsten-replicator](https://github.com/continuent/tungsten-replicator)
+
+    A Enterprise software, supported ES 5
+    
+- [maxwell](https://github.com/zendesk/maxwell)
+
+    MySQL -> maxwell -> json -> kafka -> LogStash(or FileBeat) -> elastic search
 
 ## Copyright and License
 
