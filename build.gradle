@@ -1,7 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'maven'
 
-group = 'com.fly.sync'
+group = 'org.fly.sync'
 version = '1.0.0-beta1'
 
 description = """"""
@@ -16,7 +16,7 @@ repositories {
      maven { url "http://repo.maven.apache.org/maven2" }
 }
 dependencies {
-    compile group: 'com.fly', name: 'core', version:'1.0.0'
+    compile group: 'org.fly', name: 'core', version:'1.0.0'
     compile group: 'com.sun.istack', name: 'istack-commons-runtime', version:'3.0.5'
     compile group: 'mysql', name: 'mysql-connector-java', version:'8.0.11'
     compile group: 'com.google.guava', name: 'guava', version:'18.0'
@@ -36,6 +36,7 @@ dependencies {
     compile group: 'org.jdbi', name: 'jdbi3-sqlobject', version:'3.3.0'
     compile group: 'io.reactivex.rxjava2', name: 'rxjava', version:'2.2.0'
     compile group: 'com.github.akarnokd', name: 'rxjava2-extensions', version:'0.20.0'
-    compile group: 'org.elasticsearch.client', name: 'elasticsearch-rest-client', version:'6.3.2'
-    compile group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version:'6.3.2'
+    compile group: 'org.elasticsearch.client', name: 'elasticsearch-rest-client', version:'6.4.3'
+    compile group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version:'6.4.3'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
 }

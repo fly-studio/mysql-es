@@ -26,7 +26,7 @@
         </RollingFile>
     </Appenders>
     <Loggers>
-        <Logger name="com.fly">
+        <Logger name="org.fly">
             <AppenderRef ref="Console" level="trace" />
             <AppenderRef ref="fileLogger" level="info" />
             <AppenderRef ref="errorLogger" level="error" />

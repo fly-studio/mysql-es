@@ -19,7 +19,7 @@ esac
 BASE=${bin_abs_path}/..
 RUNNING_USER=root
 CONF=$BASE/conf
-APP_MAINCLASS=com.fly.sync.Main
+APP_MAINCLASS=org.fly.sync.Main
 JAVA_OPTS=" -Djava.awt.headless=true -XX:MaxPermSize=512m -Dme.etc.path=$CONF"
 CLASSPATH=$BASE/lib
 PIDFILE=$BASE/run.pid

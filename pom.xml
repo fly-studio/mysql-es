@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.fly.sync</groupId>
+    <groupId>org.fly.sync</groupId>
     <artifactId>mysql_es</artifactId>
     <version>1.0.0-beta1</version>
 
@@ -25,7 +25,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.fly</groupId>
+            <groupId>org.fly</groupId>
             <artifactId>core</artifactId>
             <version>1.0.0</version>
         </dependency>
@@ -112,12 +112,22 @@
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client</artifactId>
-            <version>6.3.2</version>
+            <version>6.4.3</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>6.3.2</version>
+            <version>6.4.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.7</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.6.1</version>
         </dependency>
     </dependencies>
 
@@ -157,7 +167,7 @@
                     <archive>
                         <addMavenDescriptor>false</addMavenDescriptor>
                         <manifest>
-                            <mainClass>com.fly.sync.Main</mainClass>
+                            <mainClass>org.fly.sync.Main</mainClass>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
                         </manifest>
