@@ -177,7 +177,8 @@ public class Canal extends AbstractLifeCycle implements DbFactory {
 
                             for (River.Associate associate: associates
                                  )
-                                relateActionList.add(DeleteRelateAction.create(record, associate));
+                                if (associate.getWith() != null && associate.getWith().sync.deleted)
+                                    relateActionList.add(DeleteRelateAction.create(record, associate));
                         }
 
                         break;
@@ -193,7 +194,8 @@ public class Canal extends AbstractLifeCycle implements DbFactory {
 
                             for (River.Associate associate: associates
                             )
-                                relateActionList.add(InsertRelateAction.create(record, associate));
+                                if (associate.getWith() != null && associate.getWith().sync.created)
+                                    relateActionList.add(InsertRelateAction.create(record, associate));
                         }
 
                         break;
@@ -209,7 +211,8 @@ public class Canal extends AbstractLifeCycle implements DbFactory {
 
                             for (River.Associate associate: associates
                             )
-                                relateActionList.add(UpdateRelateAction.create(record, associate));
+                                if (associate.getWith() != null && associate.getWith().sync.updated)
+                                    relateActionList.add(UpdateRelateAction.create(record, associate));
                         }
 
                         break;

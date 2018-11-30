@@ -34,7 +34,7 @@ public class UpdateAction implements AbstractRecordAction {
 
         River.Table table = dbFactory.getRiverDatabase().getTable(record.table);
 
-        return new UpdateRequest(table.index, table.type, record.getID(table))
+        return new UpdateRequest(table.buildIndexName(record), table.type, record.getID(table))
                 .doc(record.toJson(dbFactory.getJsonMapper()), XContentType.JSON);
     }
 

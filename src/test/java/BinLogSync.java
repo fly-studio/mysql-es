@@ -1,9 +1,10 @@
+/*
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.Message;
-import com.fly.sync.canal.Client;
-import com.fly.sync.canal.Server;
-import com.fly.sync.setting.BinLog;
-import com.fly.sync.setting.Setting;
+import org.fly.sync.canal.Client;
+import org.fly.sync.canal.Server;
+import org.fly.sync.setting.BinLog;
+import org.fly.sync.setting.Setting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,3 +122,4 @@ public class BinLogSync {
         }
     }
 }
+*/

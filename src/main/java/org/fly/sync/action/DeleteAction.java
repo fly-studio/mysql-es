@@ -32,7 +32,7 @@ public class DeleteAction implements AbstractRecordAction {
     public DocWriteRequest getRequest(DbFactory dbFactory) throws Exception {
         River.Table table = dbFactory.getRiverDatabase().getTable(record.table);
 
-        return new DeleteRequest(table.index, table.type, record.getID(table));
+        return new DeleteRequest(table.buildIndexName(record), table.type, record.getID(table));
     }
 
     @Override

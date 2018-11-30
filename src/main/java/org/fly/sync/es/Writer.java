@@ -69,7 +69,7 @@ public class Writer implements AbstractWriter {
         // build script
         updateByQuery.script.params = values;
 
-        String json = updateByQuery.toJson();
+        String json = updateByQuery.toJson(dbFactory.getJsonMapper());
 
         // search the parent record's local KEY,
         // value is the current record's foreign KEY
@@ -140,6 +140,6 @@ public class Writer implements AbstractWriter {
             logger.error("Elasticsearch request failed.", e);
         }
 
-        logger.info("Sync {} records, duration: {} ms", actionList.size(), (System.nanoTime() - nanoTime) / 1000_000.0);
+        logger.info("Sync {} records, use {} ms", actionList.size(), (System.nanoTime() - nanoTime) / 1000_000.0);
     }
 }

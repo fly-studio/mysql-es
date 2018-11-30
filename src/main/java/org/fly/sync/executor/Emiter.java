@@ -229,14 +229,17 @@ public class Emiter extends AbstractLifeCycle implements DbFactory {
         @Override
         public List<AbstractAction> apply(List<AbstractAction> actionList) throws Exception {
 
+            long nanoTime = System.nanoTime();
+
             if (actionList.isEmpty() || !(actionList.get(0) instanceof AbstractRecordAction)) {
                 return actionList;
             }
 
-            logger.trace("WithRelations: {}", actionList.size());
-
             Relation relation = new Relation(Emiter.this, actionList);
             relation.load();
+
+            logger.info("WithRelations: {}, use {} ms", actionList.size(), (System.nanoTime() - nanoTime) / 1000_000.0);
+
 
             return actionList;
         }

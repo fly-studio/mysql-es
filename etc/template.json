@@ -1,5 +1,9 @@
 {
   "settings": {
+    "index": {
+      "sort.field": ["id"],
+      "sort.order": ["desc"]
+    },
     "analysis": {
       "analyzer": {
         "title_standard": {
@@ -45,6 +49,18 @@
   },
   "mappings": {
     "_doc": {
+      "properties": {
+        "id": {
+          "type": "long",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "doc_values": true,
+              "ignore_above": 30
+            }
+          }
+        }
+      },
       "dynamic_templates": [
         {
           "keywords": {
@@ -105,9 +121,9 @@
             "mapping": {
               "type": "long",
               "fields": {
-                "string": {
-                  "type": "string",
-                  "ignore_above": 255
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 30
                 }
               }
             }

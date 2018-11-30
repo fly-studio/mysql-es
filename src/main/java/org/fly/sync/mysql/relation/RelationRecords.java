@@ -76,7 +76,7 @@ public class RelationRecords {
         if (table == null)
             throw new RelationException("This Table ["+dbFactory.getRiverDatabase().schemaName+"."+tableName+"] is NOT a Syncable table.");
 
-        for (String withName: table.getFullWiths()
+        for (String withName: table.getFullWithNames()
         ) {
             River.Associate associate = dbFactory.getRiverDatabase().findAssociate(withName);
 

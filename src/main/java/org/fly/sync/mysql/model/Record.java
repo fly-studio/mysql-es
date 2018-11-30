@@ -7,6 +7,8 @@ import com.google.common.collect.Sets;
 import com.sun.istack.NotNull;
 import com.sun.istack.Nullable;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Record {
@@ -16,6 +18,8 @@ public class Record {
     private Map<String, Record> relations = new HashMap<>();
     private Set<String> modifiedColumns = new HashSet<>();
     private CanalEntry.EventType eventType = null;
+
+    private static final String atFormat = "yyyy.MM.dd";
 
     public Record(String table, Map<String, Object> items) {
         this.table = table;
@@ -52,7 +56,8 @@ public class Record {
         return record;
     }
 
-    public Record setEventType(CanalEntry.EventType eventType) {
+    public Record setEventType(CanalEntry.EventType eventType)
+    {
         this.eventType = eventType;
 
         return this;
@@ -290,9 +295,17 @@ public class Record {
     public String toJson(ObjectMapper objectMapper, boolean nested, String prefix) throws Exception
     {
         Map<String, Object> mix = mix(nested, prefix);
+        try {
 
-        return objectMapper
-                .writeValueAsString(mix);
+            String r = objectMapper
+                    .writeValueAsString(mix);
+            return r;
+
+        } catch (Exception e)
+        {
+            System.out.println(e.toString());
+            throw e;
+        }
     }
 
     public String toJson(ObjectMapper objectMapper) throws Exception

@@ -61,7 +61,7 @@
             // see examples below
           },
           // What relations you wanna import to this index
-          "withs": []
+          "withs": {}
         },
 
         /*
@@ -96,10 +96,10 @@
           },
           // It'll add these columnNames to this index
           // | id | uid | content | user.id | user.nickname | user.extra.id | user.extra.city |
-          "withs": [
-            "user",
-            "user.extra"
-          ]
+          "withs": {
+            "user": {},
+            "user.extra": {}
+          }
         }
 
       }

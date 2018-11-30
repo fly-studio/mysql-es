@@ -2,13 +2,17 @@ package org.fly.sync.setting;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Lists;
 import org.fly.core.text.json.Jsonable;
 import org.fly.sync.Main;
 import org.fly.sync.exception.ColumnNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class River extends Jsonable {
@@ -102,6 +106,7 @@ public class River extends Jsonable {
 
                 newAssociate(tableName);
 
+                //pad id or other
                 table.padColumns();
 
                 // add to associate
@@ -124,13 +129,14 @@ public class River extends Jsonable {
                 }
 
                 // add with to associate;
-                for (int i = 0; i < table.withs.size(); ++i) {
-                    String relationKey = table.withs.get(i);
-                    if (relationKey == null) continue;
+                for (Map.Entry<String, With> entry1: table.withs.entrySet()
+                     ) {
+                    String relationKey = entry1.getKey();
+                    if (relationKey == null || relationKey.isEmpty()) continue;
 
                     relationKey = makeRelationKey(tableName, relationKey);
 
-                    setCalledToAssociate(relationKey, table);
+                    setCalledToAssociate(relationKey, table, entry1.getValue());
                 }
             }
         }
@@ -173,7 +179,7 @@ public class River extends Jsonable {
             return related;
         }
 
-        private void setCalledToAssociate(String relationKey, Table calledTable)
+        private void setCalledToAssociate(String relationKey, Table calledTable, With with)
         {
             List<String> withLeaves = getRelationKeyList(relationKey);
 
@@ -202,6 +208,11 @@ public class River extends Jsonable {
 
                 targetAssociate.setCalledTable(calledTable);
             }
+
+            // 比如是 comments::user.extra 有兩層
+            // 當user_extras更新時只會觸發 comments::user.extra , 而users的更新不會觸發 comments::user
+            // 如果需要user的更新也要觸發，則需要將comments::user, comments::user.extra都加入with，并設置同步規則
+            targetAssociate.setWith(with);
 
             // add the middle relation like "comments::user.extra" to user's table and extra's table
             for(int i = 0; i < targetAssociate.nestedRelations.size(); ++i)
@@ -259,6 +270,28 @@ public class River extends Jsonable {
 
     }
 
+    public static class DynamicIndexField {
+        private String field;
+        private SimpleDateFormat format;
+        private int start;
+        private int end;
+
+        DynamicIndexField(int start, int end, String field, String format) {
+            this.field = field;
+            this.format = new SimpleDateFormat(format == null || format.isEmpty() ? "yyyy.MM.dd" : format);
+            this.start = start;
+            this.end = end;
+        }
+
+        public String buildIndexName(String index, Date value)
+        {
+            return index.substring(0, start) + format.format(value) + index.substring(end);
+        }
+
+        public String getField() {
+            return field;
+        }
+    }
     public static class Table extends TableBase {
         public boolean sync = true;
         public String index;
@@ -266,7 +299,10 @@ public class River extends Jsonable {
         public String type = "_doc";
         public List<String> pk = Arrays.asList("id");
         public Map<String, Relation> relations = new HashMap<>();
-        public List<String> withs = new ArrayList<>();
+        public Map<String, With> withs = new HashMap<>();
+
+        @JsonIgnore
+        public List<DynamicIndexField> dynamicIndexFields = new ArrayList<>();
 
         public Relation getRelation(String name)
         {
@@ -278,19 +314,57 @@ public class River extends Jsonable {
             return withs != null && !withs.isEmpty();
         }
 
+        public boolean isDynamicIndexName()
+        {
+            return !dynamicIndexFields.isEmpty();
+        }
+
+        public String buildIndexName(org.fly.sync.mysql.model.Record record)
+        {
+            if (isDynamicIndexName())
+            {
+                String newIndex = index;
+                for (DynamicIndexField field: Lists.reverse(dynamicIndexFields)
+                     ) {
+                    Object date = record.get(field.getField(), true);
+                    if (date instanceof Date)
+                        newIndex = field.buildIndexName(newIndex, (Date)date);
+                }
+
+                return newIndex;
+            }
+
+            return index;
+        }
+
         void fixName()
         {
             index = index.replace("${SCHEMA}", schemaName).replace("${TABLE}", tableName);
             type = type.replace("${SCHEMA}", schemaName).replace("${TABLE}", tableName);
+
+            // date math
+            if (index.charAt(0) == '<' && index.charAt(index.length() - 1) == '>')
+            {
+                index = index.substring(1, index.length() - 1);
+                Matcher m = Pattern.compile("\\{([^\\{\\}\\|]*)(\\|([^\\{\\}]*))?\\}").matcher(index);
+                while (m.find())
+                {
+                    dynamicIndexFields.add(new DynamicIndexField(m.start(), m.end(),  m.group(1), m.group(3)));
+                }
+            }
         }
 
-        public List<String> getFullWiths()
+        public List<String> getFullWithNames()
         {
-            return withs.stream().map(with -> makeRelationKey(tableName, with)).collect(Collectors.toList());
+            return withs.keySet().stream().map(with -> makeRelationKey(tableName, with)).collect(Collectors.toList());
         }
 
         void padColumns()
         {
+            for (DynamicIndexField field: dynamicIndexFields
+                 )
+                addColumn(field.getField());
+
             for (String _id: pk)
                 addColumn(_id);
 
@@ -316,6 +390,16 @@ public class River extends Jsonable {
                 if (!fullColumns.contains(local))
                     throw new ColumnNotFoundException("Local column ["+ local +"] not found in Relation [" + entry.getValue().relationKey +"] of Database ["+ schemaName +"]");
             }
+        }
+    }
+
+    public static class With {
+        public Sync sync = new Sync();
+
+        public static class Sync {
+            public boolean created = false;
+            public boolean updated = true;
+            public boolean deleted = true;
         }
     }
 
@@ -424,6 +508,7 @@ public class River extends Jsonable {
         public Table parentTable;
         public Table calledTable;
         public List<Relation> nestedRelations;
+        public With with;
 
         public Associate(String schemaName, String tableName, String relationKey, Table parentTable, List<Relation> relationList) {
             this.schemaName = schemaName;
@@ -467,6 +552,14 @@ public class River extends Jsonable {
 
         public Relation getRelation(int offset) {
             return nestedRelations.get(offset);
+        }
+
+        public void setWith(With with) {
+            this.with = with;
+        }
+
+        public With getWith() {
+            return with;
         }
     }
 }

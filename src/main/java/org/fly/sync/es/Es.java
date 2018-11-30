@@ -2,16 +2,6 @@ package org.fly.sync.es;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.search.aggregations.pipeline.movavg.models.SimpleModel;
-import org.fly.core.io.IoUtils;
-import org.fly.core.text.json.Jsonable;
-import org.fly.sync.contract.AbstractConnector;
-import org.fly.sync.exception.OutOfRetryException;
-import org.fly.sync.mysql.type.MySQLJson;
-import org.fly.sync.mysql.type.MySQLJsonSerializer;
-import org.fly.sync.setting.River;
-import org.fly.sync.setting.Setting;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -20,10 +10,19 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.fly.core.io.IoUtils;
+import org.fly.core.text.json.Jsonable;
+import org.fly.sync.contract.AbstractConnector;
+import org.fly.sync.exception.OutOfRetryException;
+import org.fly.sync.mysql.type.MySQLJson;
+import org.fly.sync.mysql.type.MySQLJsonSerializer;
+import org.fly.sync.setting.River;
+import org.fly.sync.setting.Setting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,6 +119,8 @@ public class Es {
         for (Map.Entry<String, River.Table> entry: database.tables.entrySet()
                 ) {
             River.Table table = entry.getValue();
+            if (!table.sync || table.isDynamicIndexName()) continue;
+
             createIndex(table, force);
         }
     }

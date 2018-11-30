@@ -28,6 +28,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MySql  {
 
@@ -184,6 +185,20 @@ public class MySql  {
             return cd;
         }
 
+        public List<String> jsonFields(String db, String table) throws SQLException
+        {
+            return jsonFields(db, table, false);
+        }
+
+        public List<String> jsonFields(String db, String table, boolean flush) throws SQLException
+        {
+            ColumnDefinition columnDefinition = columnDefinition(db, table, flush);
+            return Arrays.stream(columnDefinition.getFields())
+                    .filter(field -> field.getMysqlType() == MysqlType.JSON)
+                    .map(Field::getName)
+                    .collect(Collectors.toList());
+        }
+
         public ColumnDefinition columnDefinition(String db, String table) throws SQLException
         {
             return columnDefinition(db, table, false);
@@ -268,10 +283,10 @@ public class MySql  {
 
             MysqlType type = resultSet.getColumnDefinition().getFields()[index - 1].getMysqlType();
 
-            if (val instanceof String && type == MysqlType.JSON)
+            if (val instanceof String && type == MysqlType.JSON )
             {
-                //if (((char[]) val).length == 0)
-                //    return null;
+                if (((String) val).isEmpty())
+                    return null;
 
                 val = new MySQLJson(val.toString());
             }
@@ -314,15 +329,35 @@ public class MySql  {
                 String sql = table.toSql(whereInColumn);
                 Records records = new Records();
 
-                List<Map<String, Object>> list = handle.createQuery(sql)
-                        .bindList("Values", values)
-                        .mapToMap()
-                        .list()
-                        .stream()
-                        .filter(v -> v != null)
-                        .collect(Collectors.toList());
+                handle.createQuery(sql)
+                .bindList("Values", values)
+                .mapToMap()
+                .list()
+                .stream()
+                .filter(Objects::nonNull)
+                .forEach(kv -> records.add(Record.create(table.tableName, kv)));
 
-                list.forEach(kv -> records.add(Record.create(table.tableName, kv)));
+                // change JSON Fields
+                try {
+                    List<String> jsonFields = jsonFields(table.schemaName, table.tableName);
+
+                    if (!jsonFields.isEmpty())
+                    {
+                        records.forEach(record -> {
+                            Map kv = record.getItems();
+                            for (String filedName: jsonFields
+                            ) {
+                                Object json = kv.get(filedName);
+                                if (json instanceof String && !((String) json).isEmpty())
+                                    kv.put(filedName, new MySQLJson(json.toString()));
+                            }
+                        });
+                    }
+
+                } catch (SQLException e)
+                {
+
+                }
 
                 return records;
             });
