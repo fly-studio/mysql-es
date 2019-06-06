@@ -9,7 +9,8 @@ import com.alibaba.otter.canal.parse.inbound.AbstractEventParser;
 import com.alibaba.otter.canal.parse.index.CanalLogPositionManager;
 import com.alibaba.otter.canal.protocol.position.LogPosition;
 import org.fly.core.database.SqlUtils;
-import org.fly.core.text.RegexUtils;
+
+import org.fly.core.text.regex.RegexUtils;
 import org.fly.sync.contract.AbstractLifeCycle;
 import org.fly.sync.setting.BinLog;
 import org.fly.sync.setting.River;

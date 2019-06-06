@@ -2,123 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5a4dfdd3-a049-4017-aed9-82042a733234" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/artifacts/mysql_es_jar.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/lib.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/target.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/mysql_es.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/uiDesigner.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bin/me.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/.idea/artifacts/mysql_es_jar.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bin/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/.idea/libraries/lib.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/.idea/libraries/target.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bin/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/.idea/mysql_es.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/.idea/uiDesigner.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bin/.idea/uiDesigner.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bin/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/bin/me.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/etc/river.json" beforeDir="false" afterPath="$PROJECT_DIR$/bin/etc/river.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/etc/template.json" beforeDir="false" afterPath="$PROJECT_DIR$/bin/etc/template.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/gradle/wrapper/gradle-wrapper.jar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/gradlew" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/gradlew.bat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/me.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/settings.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/Main.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/action/ChangePositionAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/action/DeleteAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/action/DeleteRelateAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/action/InsertAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/action/InsertRelateAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/action/NullAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/action/ReportAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/action/UpdateAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/action/UpdateRelateAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/canal/Canal.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/canal/Client.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/canal/Server.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/AbstractAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/AbstractConnector.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/AbstractLifeCycle.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/AbstractRecordAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/AbstractRelateAction.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/AbstractRelation.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/AbstractWriter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/DaoInterface.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/DatabaseListener.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/DbFactory.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/contract/ModelInterface.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/es/Es.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/es/UpdateByQuery.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/es/Writer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/BinLogFormatException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/CanalFatalException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/ColumnNotFoundException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/ConfigException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/DisconnectionException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/DumpException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/DumpFatalException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/EsException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/EsFatalException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/FatalException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/OutOfRetryException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/RecordNotFoundException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/RelationException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/exception/RunningException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/executor/Consumer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/executor/Emiter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/executor/Executor.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/executor/Statistic.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/Dumper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/MySql.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/model/Column.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/model/ColumnDao.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/model/Database.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/model/DatabaseDao.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/model/Record.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/model/Records.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/model/Table.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/model/TableDao.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/model/Variable.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/model/VariableDao.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/parser/InsertParser.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/parser/PositionParser.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/relation/Relation.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/relation/RelationRecords.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/type/MySQLJson.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/mysql/type/MySQLJsonSerializer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/setting/BinLog.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/setting/Config.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/setting/River.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/main/java/org/fly/sync/setting/Setting.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/test/java/BinLogSync.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/etc/river.json" beforeDir="false" afterPath="$PROJECT_DIR$/etc/river.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/etc/template.json" beforeDir="false" afterPath="$PROJECT_DIR$/etc/template.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.jar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradlew" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradlew.bat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/action/DeleteAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/action/DeleteAction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/action/InsertAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/action/InsertAction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/action/UpdateAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/action/UpdateAction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Canal.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Canal.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/es/Es.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/es/Es.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/es/Writer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/es/Writer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/executor/Emiter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/executor/Emiter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Server.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/MySql.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/MySql.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/model/Record.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/model/Record.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/relation/RelationRecords.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/relation/RelationRecords.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/type/MySQLJsonSerializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/type/MySQLJsonSerializer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/fly/sync/setting/River.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/fly/sync/setting/River.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/BinLogSync.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/BinLogSync.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/target/" />
     <ignored path="$PROJECT_DIR$/.gradle/" />
@@ -148,12 +38,16 @@
     <session id="2054492020">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="3" />
+          <entry key="project.closed" value="8" />
+          <entry key="project.open.time.22" value="1" />
           <entry key="project.open.time.26" value="1" />
           <entry key="project.open.time.27" value="1" />
           <entry key="project.open.time.29" value="1" />
-          <entry key="project.open.time.3" value="1" />
-          <entry key="project.opened" value="4" />
+          <entry key="project.open.time.3" value="2" />
+          <entry key="project.open.time.34" value="1" />
+          <entry key="project.open.time.5" value="1" />
+          <entry key="project.open.time.8" value="1" />
+          <entry key="project.opened" value="9" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -173,14 +67,14 @@
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="Bash" value="1" />
-          <entry key="CLASS" value="5" />
-          <entry key="Eclipse" value="7" />
-          <entry key="JAVA" value="67" />
-          <entry key="JSON" value="19" />
-          <entry key="Log" value="9" />
+          <entry key="CLASS" value="8" />
+          <entry key="Eclipse" value="8" />
+          <entry key="JAVA" value="84" />
+          <entry key="JSON" value="28" />
+          <entry key="Log" value="16" />
           <entry key="Manifest" value="1" />
           <entry key="PLAIN_TEXT" value="2" />
-          <entry key="XML" value="4" />
+          <entry key="XML" value="9" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
@@ -191,8 +85,9 @@
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="JAVA" value="3963" />
-          <entry key="JSON" value="306" />
+          <entry key="JAVA" value="4128" />
+          <entry key="JSON" value="406" />
+          <entry key="XML" value="2" />
         </counts>
       </usages-collector>
     </session>
@@ -202,74 +97,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sample/river.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1496">
-              <caret line="88" column="14" selection-start-line="88" selection-start-column="14" selection-end-line="88" selection-end-column="14" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/es/Writer.java">
-          <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="204">
-              <caret line="35" column="5" selection-start-line="35" selection-start-column="5" selection-end-line="35" selection-end-column="5" />
-              <folding>
-                <element signature="method#updateByQuery#0;class#Writer#0" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/Dumper.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2261">
-              <caret line="175" selection-start-line="175" selection-end-line="175" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/sample/config.json">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="153">
-              <caret line="9" column="19" selection-start-line="9" selection-start-column="19" selection-end-line="9" selection-end-column="19" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pom.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2074">
-              <caret line="122" column="57" selection-start-line="122" selection-start-column="57" selection-end-line="122" selection-end-column="57" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/executor/Emiter.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2295">
-              <caret line="176" column="5" selection-start-line="176" selection-start-column="5" selection-end-line="176" selection-end-column="5" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/es/Es.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="401">
-              <caret line="145" column="43" lean-forward="true" selection-start-line="145" selection-start-column="43" selection-end-line="145" selection-end-column="43" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="jar://$MAVEN_REPOSITORY$/org/fly/core/1.0.0/core-1.0.0.jar!/org/fly/core/text/json/Jacksonable.class">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1071">
-              <caret line="76" column="63" selection-start-line="76" selection-start-column="63" selection-end-line="76" selection-end-column="63" />
+              <caret line="12" column="32" selection-start-line="12" selection-start-column="32" selection-end-line="12" selection-end-column="32" />
             </state>
           </provider>
         </entry>
@@ -277,13 +106,75 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/action/InsertAction.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="374">
-              <caret line="36" selection-start-line="36" selection-end-line="36" />
+            <state relative-caret-position="306">
+              <caret line="32" column="13" selection-start-line="32" selection-start-column="13" selection-end-line="32" selection-end-column="13" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Client.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="867">
+              <caret line="221" column="41" lean-forward="true" selection-start-line="221" selection-start-column="41" selection-end-line="221" selection-end-column="41" />
+              <folding>
+                <element signature="e#1751#1752#0" expanded="true" />
+                <element signature="e#1788#1789#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Server.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="183">
+              <caret line="37" column="54" selection-start-line="37" selection-start-column="54" selection-end-line="37" selection-end-column="54" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pom.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="170">
+              <caret line="58" column="28" selection-start-line="58" selection-start-column="28" selection-end-line="58" selection-end-column="28" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Canal.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="3604">
+              <caret line="303" selection-start-line="303" selection-end-line="303" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/MySql.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="190">
+              <caret line="285" column="13" selection-start-line="285" selection-start-column="13" selection-end-line="285" selection-end-column="13" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
     </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
@@ -297,6 +188,12 @@
       <find>MySQLJson</find>
       <find>ping</find>
       <find>replace</find>
+      <find>created_at</find>
+      <find>created</find>
+      <find>newSingleConnector</find>
+      <find>jdb</find>
+      <find>getRecordVa</find>
+      <find>Reg</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -316,13 +213,9 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/logs/error.log" />
-        <option value="$PROJECT_DIR$/sample/data/binlog.json" />
         <option value="$PROJECT_DIR$/sample/chats.json" />
-        <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/type/MySQLJsonSerializer.java" />
         <option value="$PROJECT_DIR$/etc/template.json" />
         <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/relation/RelationRecords.java" />
-        <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/MySql.java" />
-        <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Canal.java" />
         <option value="$PROJECT_DIR$/etc/river.json" />
         <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/model/Record.java" />
         <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/action/UpdateAction.java" />
@@ -333,8 +226,16 @@
         <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/setting/River.java" />
         <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/es/Writer.java" />
         <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/executor/Emiter.java" />
-        <option value="$PROJECT_DIR$/sample/river.json" />
         <option value="$PROJECT_DIR$/sample/config.json" />
+        <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Canal.java" />
+        <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/type/MySQLJsonSerializer.java" />
+        <option value="$PROJECT_DIR$/sample/data/binlog.json.2019-04-19.log" />
+        <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/CanalTest.java" />
+        <option value="$PROJECT_DIR$/sample/river.json" />
+        <option value="$PROJECT_DIR$/sample/data/binlog.json" />
+        <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/MySql.java" />
+        <option value="$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Server.java" />
       </list>
     </option>
   </component>
@@ -343,6 +244,13 @@
   <component name="JsGulpfileManager">
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="importingSettings">
+      <MavenImportingSettings>
+        <option name="importAutomatically" value="true" />
+      </MavenImportingSettings>
+    </option>
   </component>
   <component name="MavenProjectNavigator">
     <treeState>
@@ -356,13 +264,24 @@
           <item name="mysql_es" type="9519ce18:MavenProjectsStructure$ProjectNode" />
           <item name="Lifecycle" type="58874e2:MavenProjectsStructure$LifecycleNode" />
         </path>
+        <path>
+          <item name="" type="16c1761:MavenProjectsStructure$RootNode" />
+          <item name="mysql_es" type="9519ce18:MavenProjectsStructure$ProjectNode" />
+          <item name="Plugins" type="7aea1407:MavenProjectsStructure$PluginsNode" />
+        </path>
+        <path>
+          <item name="" type="16c1761:MavenProjectsStructure$RootNode" />
+          <item name="mysql_es" type="9519ce18:MavenProjectsStructure$ProjectNode" />
+          <item name="Plugins" type="7aea1407:MavenProjectsStructure$PluginsNode" />
+          <item name="assembly" type="36feed69:MavenProjectsStructure$PluginNode" />
+        </path>
       </expand>
       <select />
     </treeState>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="2196" />
-    <option name="y" value="298" />
+    <option name="x" value="-8" />
+    <option name="y" value="-8" />
     <option name="width" value="1936" />
     <option name="height" value="1056" />
   </component>
@@ -373,8 +292,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
-      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -385,6 +302,17 @@
             <path>
               <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
               <item name="mysql_es" type="462c0819:PsiDirectoryNode" />
+              <item name="sample" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
+              <item name="mysql_es" type="462c0819:PsiDirectoryNode" />
+              <item name="sample" type="462c0819:PsiDirectoryNode" />
+              <item name="logs" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
+              <item name="mysql_es" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -406,25 +334,6 @@
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="main" type="462c0819:PsiDirectoryNode" />
               <item name="java" type="462c0819:PsiDirectoryNode" />
-              <item name="org" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
-              <item name="mysql_es" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="462c0819:PsiDirectoryNode" />
-              <item name="java" type="462c0819:PsiDirectoryNode" />
-              <item name="org" type="462c0819:PsiDirectoryNode" />
-              <item name="fly" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
-              <item name="mysql_es" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="462c0819:PsiDirectoryNode" />
-              <item name="java" type="462c0819:PsiDirectoryNode" />
-              <item name="org" type="462c0819:PsiDirectoryNode" />
-              <item name="fly" type="462c0819:PsiDirectoryNode" />
               <item name="sync" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -433,33 +342,77 @@
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="main" type="462c0819:PsiDirectoryNode" />
               <item name="java" type="462c0819:PsiDirectoryNode" />
-              <item name="org" type="462c0819:PsiDirectoryNode" />
-              <item name="fly" type="462c0819:PsiDirectoryNode" />
               <item name="sync" type="462c0819:PsiDirectoryNode" />
-              <item name="es" type="462c0819:PsiDirectoryNode" />
+              <item name="action" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
+              <item name="mysql_es" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="sync" type="462c0819:PsiDirectoryNode" />
+              <item name="canal" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
               <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
             </path>
+            <path>
+              <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+              <item name="Maven: com.alibaba.otter:canal.client:1.1.3" type="70bed36:NamedLibraryElementNode" />
+            </path>
+            <path>
+              <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+              <item name="Maven: com.alibaba.otter:canal.client:1.1.3" type="70bed36:NamedLibraryElementNode" />
+              <item name="canal.client-1.1.3.jar" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+              <item name="Maven: com.alibaba.otter:canal.client:1.1.3" type="70bed36:NamedLibraryElementNode" />
+              <item name="canal.client-1.1.3.jar" type="462c0819:PsiDirectoryNode" />
+              <item name="alibaba" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+              <item name="Maven: com.alibaba.otter:canal.client:1.1.3" type="70bed36:NamedLibraryElementNode" />
+              <item name="canal.client-1.1.3.jar" type="462c0819:PsiDirectoryNode" />
+              <item name="alibaba" type="462c0819:PsiDirectoryNode" />
+              <item name="canal" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="mysql_es" type="b2602c69:ProjectViewProjectNode" />
+              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
+              <item name="Maven: com.alibaba.otter:canal.client:1.1.3" type="70bed36:NamedLibraryElementNode" />
+              <item name="canal.client-1.1.3.jar" type="462c0819:PsiDirectoryNode" />
+              <item name="alibaba" type="462c0819:PsiDirectoryNode" />
+              <item name="canal" type="462c0819:PsiDirectoryNode" />
+              <item name="client" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="AndroidView" />
+      <pane id="PackagesPane" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="SearchEverywhereHistoryKey" value="MysqlJs&#9;FILE&#9;file://D:/Codes/Application/java/mysql_es/src/main/java/org/fly/sync/mysql/type/MySQLJsonSerializer.java&#10;Record&#9;FILE&#9;file://D:/Codes/Application/java/mysql_es/src/main/java/org/fly/sync/mysql/model/Record.java" />
+    <property name="SearchEverywhereHistoryKey" value="MySql&#9;FILE&#9;file://D:/Codes/Application/java/mysql_es/src/main/java/org/fly/sync/mysql/MySql.java&#10;Canal&#9;FILE&#9;file://D:/Codes/Application/java/mysql_es/src/main/java/org/fly/sync/canal/Canal.java&#10;Client&#9;FILE&#9;file://D:/Codes/Application/java/mysql_es/src/main/java/org/fly/sync/canal/Client.java&#10;json&#9;FILE&#9;file://D:/Codes/Application/java/mysql_es/src/main/java/org/fly/sync/mysql/type/MySQLJsonSerializer.java&#10;MysqlJs&#9;FILE&#9;file://D:/Codes/Application/java/mysql_es/src/main/java/org/fly/sync/mysql/type/MySQLJsonSerializer.java&#10;Record&#9;FILE&#9;file://D:/Codes/Application/java/mysql_es/src/main/java/org/fly/sync/mysql/model/Record.java" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1543461676640" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1559791885701" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
     <property name="project.structure.last.edited" value="SDKs" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
+    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -473,7 +426,21 @@
       </list>
     </option>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.Main">
+    <configuration name="CanalTest" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="org.fly.sync.CanalTest" />
+      <module name="mysql_es" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.fly.sync.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
@@ -510,9 +477,14 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Application.Main" />
+      <item itemvalue="Application.CanalTest" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Application.Main" />
+        <item itemvalue="Application.CanalTest" />
       </list>
     </recent_temporary>
   </component>
@@ -530,11 +502,16 @@
       <workItem from="1542964249276" duration="3921000" />
       <workItem from="1542968974951" duration="11421000" />
       <workItem from="1543543513793" duration="22000" />
+      <workItem from="1555667548861" duration="11131000" />
+      <workItem from="1555740905590" duration="8847000" />
+      <workItem from="1558169582616" duration="612000" />
+      <workItem from="1558668538411" duration="393000" />
+      <workItem from="1559735855818" duration="4410000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="40928000" />
+    <option name="totallyTimeSpent" value="66321000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -546,10 +523,10 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1912" y="-8" width="1936" height="1056" extended-state="6" />
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25799572" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.27132195" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="2" />
       <window_info id="Designer" order="3" />
@@ -587,6 +564,11 @@
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <ignored-roots>
+      <path value="$PROJECT_DIR$/bin" />
+    </ignored-roots>
+  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
@@ -608,6 +590,36 @@
           <properties />
           <option name="timeStamp" value="17" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Client.java</url>
+          <line>157</line>
+          <properties />
+          <option name="timeStamp" value="19" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Canal.java</url>
+          <line>294</line>
+          <properties />
+          <option name="timeStamp" value="26" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/fly/sync/action/InsertAction.java</url>
+          <line>37</line>
+          <properties />
+          <option name="timeStamp" value="27" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Server.java</url>
+          <line>64</line>
+          <properties />
+          <option name="timeStamp" value="28" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Server.java</url>
+          <line>38</line>
+          <properties />
+          <option name="timeStamp" value="29" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
@@ -616,105 +628,12 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="jar://$MAVEN_REPOSITORY$/org/jdbi/jdbi3-core/3.3.0/jdbi3-core-3.3.0-sources.jar!/org/jdbi/v3/core/Jdbi.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="171">
-          <caret line="317" selection-start-line="317" selection-end-line="317" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/executor/Consumer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="286">
-          <caret line="93" column="66" lean-forward="true" selection-start-line="93" selection-start-column="66" selection-end-line="93" selection-end-column="66" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sample/logs/app.log">
-      <provider selected="true" editor-type-id="LogFileEditorProvider">
-        <state relative-caret-position="-11">
-          <caret line="806" column="47" lean-forward="true" selection-start-line="806" selection-start-column="47" selection-end-line="806" selection-end-column="47" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sample/logs/error.log">
-      <provider selected="true" editor-type-id="LogFileEditorProvider">
-        <state relative-caret-position="-5026">
-          <caret line="19" column="83" lean-forward="true" selection-start-line="19" selection-start-column="83" selection-end-line="19" selection-end-column="83" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/logs/error.log" />
-    <entry file="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.9.7/jackson-databind-2.9.7.jar!/com/fasterxml/jackson/databind/module/SimpleModule.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-696">
-          <caret line="55" column="129" selection-start-line="55" selection-start-column="129" selection-end-line="55" selection-end-column="129" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.9.7/jackson-databind-2.9.7.jar!/com/fasterxml/jackson/databind/JsonSerializer.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="102">
-          <caret line="17" column="22" selection-start-line="17" selection-start-column="22" selection-end-line="17" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sample/chats.json" />
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/action/InsertRelateAction.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="183">
-          <caret line="20" column="39" selection-start-line="20" selection-start-column="39" selection-end-line="20" selection-end-column="39" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/action/ChangePositionAction.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-136">
-          <caret line="9" column="13" selection-start-line="9" selection-start-column="13" selection-end-line="9" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/contract/AbstractWriter.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="102">
-          <caret line="6" column="9" selection-start-line="6" selection-start-column="9" selection-end-line="6" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/action/ReportAction.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="10" column="13" selection-start-line="10" selection-start-column="13" selection-end-line="10" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/action/NullAction.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="7" column="13" selection-start-line="7" selection-start-column="13" selection-end-line="7" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://D:/Tools/IDE/Java/jdk1.8.0_181/src.zip!/java/sql/Timestamp.java" />
-    <entry file="jar://$MAVEN_REPOSITORY$/org/elasticsearch/client/elasticsearch-rest-high-level-client/6.4.3/elasticsearch-rest-high-level-client-6.4.3-sources.jar!/org/elasticsearch/client/RestHighLevelClient.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="208">
-          <caret line="371" column="21" selection-start-line="371" selection-start-column="21" selection-end-line="371" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/etc/config.json">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/etc/log4j2.xml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="153">
           <caret line="18" column="59" selection-start-line="18" selection-start-column="59" selection-end-line="18" selection-end-column="59" />
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/etc/binlog.json">
-      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/setting/Setting.java">
       <provider selected="true" editor-type-id="text-editor">
@@ -740,38 +659,10 @@
     <entry file="file://$PROJECT_DIR$/bin/me.sh" />
     <entry file="file://$PROJECT_DIR$/.factorypath" />
     <entry file="file://$PROJECT_DIR$/.classpath" />
-    <entry file="file://$PROJECT_DIR$/.project">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="9" column="23" lean-forward="true" selection-start-line="9" selection-start-column="23" selection-end-line="9" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/etc/template.json">
       <provider selected="true" editor-type-id="text-editor">
         <state>
           <caret line="6" column="17" selection-start-line="6" selection-start-column="17" selection-end-line="6" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Canal.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="50" selection-start-line="50" selection-end-line="50" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/etc/river.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1700">
-          <caret line="100" column="28" selection-start-line="100" selection-start-column="28" selection-end-line="100" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/MySql.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5440">
-          <caret line="360" selection-start-line="360" selection-end-line="360" />
         </state>
       </provider>
     </entry>
@@ -817,32 +708,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/sample/data/binlog.json" />
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/type/MySQLJsonSerializer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="21" lean-forward="true" selection-start-line="21" selection-end-line="21" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/model/Record.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="371">
           <caret line="148" column="66" selection-start-line="148" selection-start-column="66" selection-end-line="148" selection-end-column="66" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sample/template.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="152">
-          <caret line="30" column="40" lean-forward="true" selection-start-line="30" selection-start-column="40" selection-end-line="30" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/setting/River.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="149">
-          <caret line="324" column="13" selection-start-line="324" selection-start-column="13" selection-end-line="324" selection-end-column="13" />
         </state>
       </provider>
     </entry>
@@ -860,10 +729,24 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/sample/river.json">
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/executor/Emiter.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1496">
-          <caret line="88" column="14" selection-start-line="88" selection-start-column="14" selection-end-line="88" selection-end-column="14" />
+        <state relative-caret-position="813">
+          <caret line="176" column="5" selection-start-line="176" selection-start-column="5" selection-end-line="176" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/es/Es.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="55" selection-start-line="55" selection-end-line="55" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/fly/core/1.0.0/core-1.0.0.jar!/org/fly/core/text/json/Jacksonable.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="785">
+          <caret line="76" column="63" selection-start-line="76" selection-start-column="63" selection-end-line="76" selection-end-column="63" />
         </state>
       </provider>
     </entry>
@@ -877,52 +760,202 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/Dumper.java">
+    <entry file="file://$PROJECT_DIR$/hs_err_pid90232.log" />
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/setting/River.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2261">
-          <caret line="175" selection-start-line="175" selection-end-line="175" />
+        <state relative-caret-position="8177">
+          <caret line="515" column="43" lean-forward="true" selection-start-line="515" selection-start-column="43" selection-end-line="515" selection-end-column="43" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
         </state>
       </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/Dumper.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="309">
+          <caret line="165" column="15" lean-forward="true" selection-start-line="165" selection-start-column="15" selection-end-line="165" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/log4j2.xml">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/sample/config.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="153">
-          <caret line="9" column="19" selection-start-line="9" selection-start-column="19" selection-end-line="9" selection-end-column="19" />
+          <caret line="9" column="19" lean-forward="true" selection-start-line="9" selection-start-column="19" selection-end-line="9" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/template.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="152">
+          <caret line="30" column="40" lean-forward="true" selection-start-line="30" selection-start-column="40" selection-end-line="30" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/data/binlog.json.2019-04-19.log">
+      <provider selected="true" editor-type-id="LogFileEditorProvider">
+        <state relative-caret-position="34">
+          <caret line="2" column="61" selection-start-line="2" selection-start-column="61" selection-end-line="2" selection-end-column="61" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/etc/binlog.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/etc/config.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/type/MySQLJsonSerializer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="21" lean-forward="true" selection-start-line="21" selection-end-line="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/com/alibaba/otter/canal.instance.manager/1.1.3/canal.instance.manager-1.1.3.jar!/com/alibaba/otter/canal/instance/manager/model/Canal.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="30" selection-start-line="30" selection-end-line="30" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/bin/pom.xml" />
+    <entry file="file://$PROJECT_DIR$/etc/river.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="374">
+          <caret line="22" column="20" selection-start-line="22" selection-start-column="20" selection-end-line="22" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.project">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="12" column="22" selection-start-line="12" selection-start-column="22" selection-end-line="12" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/com/alibaba/otter/canal.instance.manager/1.1.3/canal.instance.manager-1.1.3-sources.jar!/com/alibaba/otter/canal/instance/manager/model/Canal.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="188">
+          <caret line="32" column="21" selection-start-line="32" selection-start-column="21" selection-end-line="32" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/com/alibaba/otter/canal.client/1.1.3/canal.client-1.1.3.jar!/com/alibaba/otter/canal/client/CanalConnectors.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="19" column="86" selection-start-line="19" selection-start-column="86" selection-end-line="19" selection-end-column="86" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/com/alibaba/otter/canal.client/1.1.3/canal.client-1.1.3-sources.jar!/com/alibaba/otter/canal/client/impl/SimpleCanalConnector.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="171">
+          <caret line="188" selection-start-line="188" selection-end-line="188" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/Main.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="15" selection-start-line="15" selection-end-line="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/data/binlog.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="83" selection-start-column="83" selection-end-column="83" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/com/alibaba/otter/canal.client/1.1.3/canal.client-1.1.3-sources.jar!/com/alibaba/otter/canal/client/CanalConnectors.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="211">
+          <caret line="27" column="7" lean-forward="true" selection-start-line="27" selection-start-column="7" selection-end-line="27" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/CanalTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="6" selection-start-line="6" selection-end-line="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/logs/app-2019-04-19.log">
+      <provider selected="true" editor-type-id="LogFileEditorProvider">
+        <state relative-caret-position="701">
+          <caret line="5338" column="63" lean-forward="true" selection-start-line="5338" selection-start-column="63" selection-end-line="5338" selection-end-column="63" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sample/logs/app.log">
+      <provider selected="true" editor-type-id="LogFileEditorProvider">
+        <state relative-caret-position="272">
+          <caret line="16" column="47" selection-start-line="16" selection-start-column="47" selection-end-line="16" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/mysql/MySql.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="190">
+          <caret line="285" column="13" selection-start-line="285" selection-start-column="13" selection-end-line="285" selection-end-column="13" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2074">
-          <caret line="122" column="57" selection-start-line="122" selection-start-column="57" selection-end-line="122" selection-end-column="57" />
+        <state relative-caret-position="170">
+          <caret line="58" column="28" selection-start-line="58" selection-start-column="28" selection-end-line="58" selection-end-column="28" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/executor/Emiter.java">
+    <entry file="file://$PROJECT_DIR$/sample/river.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2295">
-          <caret line="176" column="5" selection-start-line="176" selection-start-column="5" selection-end-line="176" selection-end-column="5" />
+        <state relative-caret-position="204">
+          <caret line="12" column="32" selection-start-line="12" selection-start-column="32" selection-end-line="12" selection-end-column="32" />
         </state>
       </provider>
     </entry>
-    <entry file="jar://$MAVEN_REPOSITORY$/org/fly/core/1.0.0/core-1.0.0.jar!/org/fly/core/text/json/Jacksonable.class">
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Canal.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1071">
-          <caret line="76" column="63" selection-start-line="76" selection-start-column="63" selection-end-line="76" selection-end-column="63" />
+        <state relative-caret-position="3604">
+          <caret line="303" selection-start-line="303" selection-end-line="303" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Server.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="183">
+          <caret line="37" column="54" selection-start-line="37" selection-start-column="54" selection-end-line="37" selection-end-column="54" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/action/InsertAction.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="36" selection-start-line="36" selection-end-line="36" />
+        <state relative-caret-position="306">
+          <caret line="32" column="13" selection-start-line="32" selection-start-column="13" selection-end-line="32" selection-end-column="13" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/es/Es.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/fly/sync/canal/Client.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="401">
-          <caret line="145" column="43" lean-forward="true" selection-start-line="145" selection-start-column="43" selection-end-line="145" selection-end-column="43" />
+        <state relative-caret-position="867">
+          <caret line="221" column="41" lean-forward="true" selection-start-line="221" selection-start-column="41" selection-end-line="221" selection-end-column="41" />
+          <folding>
+            <element signature="e#1751#1752#0" expanded="true" />
+            <element signature="e#1788#1789#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

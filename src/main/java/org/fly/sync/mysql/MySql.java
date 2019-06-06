@@ -1,14 +1,6 @@
 package org.fly.sync.mysql;
 
 import com.mysql.cj.MysqlType;
-import org.fly.core.database.SqlUtils;
-import org.fly.sync.contract.AbstractConnector;
-import org.fly.sync.exception.BinLogFormatException;
-import org.fly.sync.exception.DisconnectionException;
-import org.fly.sync.exception.RecordNotFoundException;
-import org.fly.sync.mysql.type.MySQLJson;
-import org.fly.sync.mysql.model.*;
-import org.fly.sync.setting.River;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.Driver;
 import com.mysql.cj.jdbc.result.ResultSetFactory;
@@ -19,6 +11,14 @@ import com.mysql.cj.protocol.a.result.ByteArrayRow;
 import com.mysql.cj.protocol.a.result.ResultsetRowsStatic;
 import com.mysql.cj.result.DefaultColumnDefinition;
 import com.mysql.cj.result.Field;
+import org.fly.core.database.SqlUtils;
+import org.fly.sync.contract.AbstractConnector;
+import org.fly.sync.exception.BinLogFormatException;
+import org.fly.sync.exception.DisconnectionException;
+import org.fly.sync.exception.RecordNotFoundException;
+import org.fly.sync.mysql.model.*;
+import org.fly.sync.mysql.type.MySQLJson;
+import org.fly.sync.setting.River;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
@@ -28,7 +28,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class MySql  {
 
@@ -279,7 +278,14 @@ public class MySql  {
 
         private Object getRecordValue(ResultSetImpl resultSet, int index) throws SQLException
         {
-            Object val = resultSet.getObject(index);
+            Object val;
+            try {
+
+                val = resultSet.getObject(index);
+            } catch (SQLException e)
+            {
+                val = null;
+            }
 
             MysqlType type = resultSet.getColumnDefinition().getFields()[index - 1].getMysqlType();
 
