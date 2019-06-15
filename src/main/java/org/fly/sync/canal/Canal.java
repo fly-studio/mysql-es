@@ -172,8 +172,8 @@ public class Canal extends AbstractLifeCycle implements DbFactory {
                             Record record = getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getBeforeColumnsList(rowData));
                             record.setDeleted();
 
-                            if (sync)
-                                actionList.add(DeleteAction.create(record));
+                            //if (sync)
+                            //    actionList.add(DeleteAction.create(record));
 
                             for (River.Associate associate: associates
                                  )

@@ -20,10 +20,13 @@ import org.fly.sync.mysql.model.*;
 import org.fly.sync.mysql.type.MySQLJson;
 import org.fly.sync.setting.River;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.result.ResultSetException;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.*;
@@ -278,29 +281,65 @@ public class MySql  {
 
         private Object getRecordValue(ResultSetImpl resultSet, int index) throws SQLException
         {
+            return getRecordValue(resultSet, index, false);
+        }
+
+        /**
+         *
+         * @param resultSet
+         * @param index
+         * @param hexBinary 表示binary数据是字符串形态的0x0000，必须要0x开头
+         * @return
+         * @throws SQLException
+         */
+        private Object getRecordValue(ResultSetImpl resultSet, int index, boolean hexBinary) throws SQLException {
             Object val;
             try {
 
                 val = resultSet.getObject(index);
-            } catch (SQLException e)
-            {
+            } catch (SQLException e) {
                 val = null;
             }
 
+            if (val == null)
+                return null;
+
             MysqlType type = resultSet.getColumnDefinition().getFields()[index - 1].getMysqlType();
 
-            if (val instanceof String && type == MysqlType.JSON )
-            {
+            if (val instanceof String && type == MysqlType.JSON) {
                 if (((String) val).isEmpty())
                     return null;
 
                 val = new MySQLJson(val.toString());
             }
 
+            if (hexBinary) {
+                switch (type) {
+                    case VARBINARY:
+                    case BINARY:
+                    case BLOB:
+                    case LONGBLOB:
+                        val = new BigInteger(new String((byte[]) val, 2, ((byte[]) val).length - 2, StandardCharsets.US_ASCII), 16).toByteArray();
+                }
+            }
+
             return val;
         }
 
         public Records mixRecords(String db, String table, List<List<String>> data)
+        {
+            return mixRecords(db, table, data, false);
+        }
+
+        /**
+         *
+         * @param db
+         * @param table
+         * @param data
+         * @param hexBinary 表示binary数据是字符串形态的0x0000，必须要0x开头
+         * @return
+         */
+        public Records mixRecords(String db, String table, List<List<String>> data, boolean hexBinary)
         {
             try
             {
@@ -314,7 +353,7 @@ public class MySql  {
                     Map<String, Object> row = new HashMap<>();
 
                     for(int i = 1; i <= columnNames.size(); ++i)
-                        row.put(columnNames.get(i - 1), getRecordValue(resultSet, i));
+                        row.put(columnNames.get(i - 1), getRecordValue(resultSet, i, hexBinary));
 
                     records.add(Record.create(table, row));
                 }
@@ -335,13 +374,18 @@ public class MySql  {
                 String sql = table.toSql(whereInColumn);
                 Records records = new Records();
 
-                handle.createQuery(sql)
-                .bindList("Values", values)
-                .mapToMap()
-                .list()
-                .stream()
-                .filter(Objects::nonNull)
-                .forEach(kv -> records.add(Record.create(table.tableName, kv)));
+                try {
+                    handle.createQuery(sql)
+                            .bindList("Values", values)
+                            .mapToMap()
+                            .list()
+                            .stream()
+                            .filter(Objects::nonNull)
+                            .forEach(kv -> records.add(Record.create(table.tableName, kv)));
+                } catch (ResultSetException e)
+                {
+                    logger.error(e.toString(), e);
+                }
 
                 // change JSON Fields
                 try {
@@ -362,7 +406,7 @@ public class MySql  {
 
                 } catch (SQLException e)
                 {
-
+                    logger.error(e.toString(), e);
                 }
 
                 return records;

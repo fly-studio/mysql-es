@@ -109,7 +109,7 @@ public class Dumper extends AbstractLifeCycle implements DbFactory {
             .append(river.my.password)
             .append(" --default-character-set=")
             .append(river.charset)
-            .append(" --master-data --single-transaction --skip-lock-tables --compact --skip-opt --quick --no-create-info --skip-extended-insert --set-gtid-purged=OFF ")
+            .append(" --master-data --single-transaction --skip-lock-tables --compact --skip-opt --quick --hex-blob --no-create-info --skip-extended-insert --set-gtid-purged=OFF ")
             .append(database.schemaName);
 
         for (Map.Entry<String, River.Table> tableEntry: database.tables.entrySet()
@@ -221,7 +221,7 @@ public class Dumper extends AbstractLifeCycle implements DbFactory {
                 return;
             }
 
-            Records records = getMySql().getUtcQuery().mixRecords(getRiverDatabase().schemaName, lastTable, insertData);
+            Records records = getMySql().getUtcQuery().mixRecords(getRiverDatabase().schemaName, lastTable, insertData, true);
             if (records == null)
                 logger.warn("Lost {} records.", insertData.size());
             else
