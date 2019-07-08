@@ -119,7 +119,7 @@ public class Es {
         for (Map.Entry<String, River.Table> entry: database.tables.entrySet()
                 ) {
             River.Table table = entry.getValue();
-            if (!table.sync || table.isDynamicIndexName()) continue;
+            if (!table.sync.created || table.isDynamicIndexName()) continue;
 
             createIndex(table, force);
         }

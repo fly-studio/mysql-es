@@ -114,7 +114,7 @@ public class Dumper extends AbstractLifeCycle implements DbFactory {
 
         for (Map.Entry<String, River.Table> tableEntry: database.tables.entrySet()
              ) {
-            if (!tableEntry.getValue().sync)
+            if (!tableEntry.getValue().sync.created)
                 continue;
 
             cmd.append(" ");

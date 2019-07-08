@@ -157,7 +157,7 @@ public class Canal extends AbstractLifeCycle implements DbFactory {
 
                 String tableName = entry.getHeader().getTableName();
 
-                boolean sync = getRiverDatabase().isSync(tableName);
+                River.Sync sync = getRiverDatabase().getSync(tableName);
                 List<River.Associate> associates = getRiverDatabase().getAssociates(tableName);
 
 
@@ -172,8 +172,8 @@ public class Canal extends AbstractLifeCycle implements DbFactory {
                             Record record = getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getBeforeColumnsList(rowData));
                             record.setDeleted();
 
-                            //if (sync)
-                            //    actionList.add(DeleteAction.create(record));
+                            if (sync.deleted)
+                                actionList.add(DeleteAction.create(record));
 
                             for (River.Associate associate: associates
                                  )
@@ -189,7 +189,7 @@ public class Canal extends AbstractLifeCycle implements DbFactory {
                             Record record = getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData));
                             record.setInserted();
 
-                            if (sync)
+                            if (sync.created)
                                 actionList.add(InsertAction.create(record));
 
                             for (River.Associate associate: associates
@@ -206,7 +206,7 @@ public class Canal extends AbstractLifeCycle implements DbFactory {
                             Record record = getMySql().getLocalQuery().mixRecord(getRiverDatabase().schemaName, tableName, getAfterColumnsList(rowData));
                             record.setUpdated(getModifiedColumns(rowData.getAfterColumnsList()));
 
-                            if (sync)
+                            if (sync.updated)
                                 actionList.add(UpdateAction.create(record));
 
                             for (River.Associate associate: associates

@@ -2,6 +2,8 @@ package org.fly.sync.setting;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import org.fly.core.text.json.Jsonable;
 import org.fly.sync.Main;
@@ -235,9 +237,9 @@ public class River extends Jsonable {
         }
 
         @JsonIgnore
-        public boolean isSync(String tableName)
+        public Sync getSync(String tableName)
         {
-            return tables.containsKey(tableName) && getTable(tableName).sync;
+            return tables.containsKey(tableName) ? getTable(tableName).sync : new Sync();
         }
 
         public List<Associate> getAssociates(String tableName, boolean unique) {
@@ -292,8 +294,32 @@ public class River extends Jsonable {
             return field;
         }
     }
+
+    public static class Sync {
+        public boolean created = true;
+        public boolean updated = true;
+        public boolean deleted = true;
+
+        public Sync(boolean created, boolean updated, boolean deleted) {
+            this.created = created;
+            this.updated = updated;
+            this.deleted = deleted;
+        }
+
+        public Sync() {
+
+        }
+
+        public Sync(boolean allValue)
+        {
+            this.created = allValue;
+            this.updated = allValue;
+            this.deleted = allValue;
+        }
+    }
+
     public static class Table extends TableBase {
-        public boolean sync = true;
+        public Sync sync = new Sync(false, true, true);
         public String index;
         public String template = "";
         public String type = "_doc";
@@ -391,16 +417,28 @@ public class River extends Jsonable {
                     throw new ColumnNotFoundException("Local column ["+ local +"] not found in Relation [" + entry.getValue().relationKey +"] of Database ["+ schemaName +"]");
             }
         }
+
+        /*@JsonProperty("sync")
+        public void setSync(JsonNode node)
+        {
+            if (node == null)
+                this.sync = new Sync();
+            else if (node.isBoolean())
+                this.sync = new Sync(node.asBoolean());
+            else if (node.isObject())
+            {
+                ObjectMapper objectMapper = new ObjectMapper();
+                this.sync = objectMapper.convertValue(node, Sync.class);
+            }
+            else
+            {
+                this.sync = new Sync();
+            }
+        }*/
     }
 
     public static class With {
-        public Sync sync = new Sync();
-
-        public static class Sync {
-            public boolean created = false;
-            public boolean updated = true;
-            public boolean deleted = true;
-        }
+        public Sync sync = new Sync(false, true, true);
     }
 
     public static class Relation extends TableBase {
