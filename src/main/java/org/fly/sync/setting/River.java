@@ -239,7 +239,7 @@ public class River extends Jsonable {
         @JsonIgnore
         public Sync getSync(String tableName)
         {
-            return tables.containsKey(tableName) ? getTable(tableName).sync : new Sync();
+            return tables.containsKey(tableName) ? getTable(tableName).sync : new Sync(false);
         }
 
         public List<Associate> getAssociates(String tableName, boolean unique) {
@@ -312,9 +312,7 @@ public class River extends Jsonable {
 
         public Sync(boolean allValue)
         {
-            this.created = allValue;
-            this.updated = allValue;
-            this.deleted = allValue;
+            this(allValue, allValue, allValue);
         }
     }
 

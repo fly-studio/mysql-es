@@ -70,7 +70,7 @@ public class Setting {
         }
 
         if (config.logDir == null) {
-            config.logDir = getEtcPath("log");
+            config.logDir = getEtcPath("logs");
             logger.warn("Invaid [log_dir] in \"{}\", Redirect path to default.", CONFIG_FILE);
         }
 
